@@ -1,0 +1,29 @@
+[project]
+name = "level4-lesson1"
+version = "0.1.0"
+description = "STEMLink AI Engineer Bootcamp — Level 4 Lesson 1: from a model call to an agent that searches"
+readme = "README.md"
+requires-python = ">=3.10"
+
+dependencies = [
+    "openai>=2.0",
+    "langchain>=1.4",
+    "langchain-openai>=1.0",
+    "langchain-pinecone>=0.2.13",
+    "langgraph>=1.0",
+    "pinecone>=7.0",
+    "sympy>=1.13",
+    "numpy>=1.26",
+    "requests>=2.32",
+    "python-dotenv>=1.0",
+    "grandalf>=0.8",
+]
+
+[dependency-groups]
+dev = [
+    "marimo>=0.24.2",
+]
+
+# A set of numbered teaching notebooks, not an installable library — nothing to build.
+[tool.uv]
+package = false
