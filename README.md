@@ -186,7 +186,18 @@ Each notebook arrives in its own pull request. Go through them in order.
 
 <!-- notebook-04 -->
 
-<!-- notebook-05 -->
+### `05_agent_calculator.py`: `create_agent` writes the loop for you
+
+In `04` you ran the loop by hand, once. `create_agent` repeats it until the
+model stops asking. Four deliberately trivial arithmetic tools keep the focus
+on the loop.
+
+- An agent is a graph: print `agent.get_graph().draw_ascii()` to see the
+  `model` node, the `tools` node, and the arrow back (that arrow is the loop)
+- One tool, one step, then four tools chained across one problem
+- Reading the message trace
+
+**Needs:** `OPENAI_API_KEY` · **Uses:** `config.chat_model`
 
 <!-- notebook-06 -->
 
