@@ -1,175 +1,210 @@
-# Level 4 · Lesson 1 — From a Model Call to an Agent That Searches
+<div align="center">
 
-STEMLink AI Engineer Bootcamp.
+# From a Model Call to an Agent That Searches
 
-Thirteen notebooks in `notebooks/`. Each one is a concept, each one runs on its own,
-and each one exists because the previous one hit a wall.
+**STEMLink AI Engineer Bootcamp**
 
-`00` is a short one on why a framework exists at all. Everything after it is
-LangChain and LangGraph — taken apart, one piece at a time, printing what came
-back, before using the convenient wrapper around it.
+[![Level 4](https://img.shields.io/badge/Level-4-6f42c1?style=for-the-badge)](#)
+[![Lesson 1](https://img.shields.io/badge/Lesson-1-0969da?style=for-the-badge)](#)
+
+[![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![uv](https://img.shields.io/badge/uv-managed-DE5FE9?logo=uv&logoColor=white)](https://docs.astral.sh/uv/)
+[![marimo](https://img.shields.io/badge/notebooks-marimo-1C7ED6)](https://marimo.io/)
+[![LangChain](https://img.shields.io/badge/LangChain-1.x-1C3C3C?logo=langchain&logoColor=white)](https://docs.langchain.com/)
+[![LangGraph](https://img.shields.io/badge/LangGraph-1.x-1C3C3C)](https://docs.langchain.com/oss/python/langgraph/overview)
+[![OpenAI](https://img.shields.io/badge/OpenAI-API-412991?logo=openai&logoColor=white)](https://platform.openai.com/)
+[![Pinecone](https://img.shields.io/badge/Pinecone-vector%20store-000000)](https://www.pinecone.io/)
+[![Topics](https://img.shields.io/badge/topics-LLMs%20·%20Agents%20·%20RAG-orange)](#the-notebooks)
+
+</div>
+
+---
+
+## What this is
+
+The code for Level 4, Lesson 1 of the STEMLink AI Engineer Bootcamp. The lesson
+goes from a single call to a language model all the way to an agent that
+decides for itself when to search a vector database.
+
+It is a set of numbered [marimo](https://marimo.io/) notebooks. Each one covers
+one concept and runs on its own, and each one exists because the previous one
+hit a wall. Everything runs on LangChain and LangGraph, but each piece is taken
+apart and printed before you use the convenient wrapper around it.
+
+One question runs through the whole lesson:
+
+> *I am growing Bg 300 paddy under irrigation in the Dry Zone. How much urea, and when?*
+
+A bare model invents an answer. By the end, an agent answers it correctly from
+Sri Lanka Department of Agriculture passages it retrieved itself.
+
+## What's inside
+
+```
+.
+├── notebooks/          # the lesson, one marimo notebook per concept (see below)
+├── scripts/            # shared setup every notebook imports
+│   ├── config.py
+│   ├── corpus.py
+│   └── weather.py
+├── .env.example        # the keys you need, copy to .env
+├── .python-version     # 3.12, uv fetches it for you
+├── pyproject.toml      # dependencies
+└── uv.lock             # exact locked versions
+```
 
 ---
 
 ## Setup
 
-Python **3.10 or newer**, and [uv](https://docs.astral.sh/uv/):
+### 1 · Install uv
+
+This project uses [uv](https://docs.astral.sh/uv/) to manage Python and
+dependencies. Follow the **[uv installation guide](https://docs.astral.sh/uv/getting-started/installation/)**,
+or use the one-liner:
 
 ```bash
-curl -LsSf https://astral.sh/uv/install.sh | sh     # macOS / Linux
-# Windows PowerShell:
-# powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+# macOS / Linux
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Windows (PowerShell)
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
 ```
 
-Then, from this folder:
+You do **not** need to install Python yourself. uv reads `.python-version` and
+downloads CPython 3.12 if you don't have it.
+
+### 2 · Install the dependencies
+
+From the project folder:
 
 ```bash
-uv sync                            # creates .venv, installs the locked versions
-cp .env.example .env               # fill in your keys
-uv run marimo edit notebooks/00_providers_and_wrappers.py   # opens in your browser
+uv sync
 ```
 
-Each notebook is a plain `.py` file — marimo notebooks, not Jupyter. `marimo
-edit` opens one interactively; `uv run notebooks/<file>.py` runs it top to
-bottom as a script, same as any of these used to run before. Cells are pure
-Python functions under the hood, so `git diff` on a notebook reads like a
-diff on code, not a JSON blob.
+This creates `.venv/` and installs the exact versions pinned in `uv.lock`,
+including marimo.
 
-You do **not** need to install Python — `uv sync` reads `.python-version` and
-fetches CPython 3.12 if you do not have it. `uv run` uses the project's
-environment without you activating anything.
+### 3 · Add your keys
+
+```bash
+cp .env.example .env
+```
+
+Then fill in `.env`:
 
 | key | where from |
 |---|---|
 | `OPENAI_API_KEY` | STEMLink gave you this |
-| `PINECONE_API_KEY` | free account at https://app.pinecone.io — no card |
-| `NTFY_TOPIC` | a name you invent, see `07` |
+| `PINECONE_API_KEY` | free account at https://app.pinecone.io (no card) |
+| `PINECONE_INDEX` | leave as `fieldoracle`, or add your initials if you share a Pinecone account |
+| `NTFY_TOPIC` | a unique topic name you invent, used by the notify notebook |
+
+`.env` is gitignored. Never commit it.
+
+### 4 · Open a notebook
+
+**Option A: activate the virtual environment (recommended)**
+
+```bash
+# macOS / Linux
+source .venv/bin/activate
+
+# Windows (PowerShell)
+.venv\Scripts\Activate.ps1
+
+marimo edit notebooks/<notebook>.py
+```
+
+Once it's activated, `python` and `marimo` point at the project's environment
+for the rest of the terminal session. Run `deactivate` when you're done.
+
+**Option B: use `uv run` without activating**
+
+```bash
+uv run marimo edit notebooks/<notebook>.py
+```
+
+Either way, marimo opens the notebook in your browser. Run the cells top to
+bottom: markdown cells explain, code cells do the thing. You can also run a
+notebook as a plain script with `python notebooks/<notebook>.py` (or
+`uv run notebooks/<notebook>.py`).
+
+> marimo notebooks are plain `.py` files, not Jupyter JSON, so `git diff` on
+> a notebook reads like a diff on code.
+
+---
+
+## Core components
+
+The three files in `scripts/` are shared setup, not lesson concepts. The first
+code cell in every notebook adds `scripts/` to the import path, so
+`from config import chat_model` works wherever marimo was launched from.
+
+### `scripts/config.py`: models and keys
+
+| name | what it is |
+|---|---|
+| `CHAT_MODEL_RAW` / `CHAT_MODEL` | the chat model, as the raw OpenAI name and as LangChain's `provider:model` string |
+| `EMBED_MODEL` / `EMBED_DIM` | `text-embedding-3-small`, 1536 dimensions |
+| `INDEX_NAME`, `NTFY_TOPIC` | read from `.env` |
+| `require(name)` | exits with a readable message when an env var is missing, instead of a stack trace |
+| `chat_model(**kwargs)` | the chat model every notebook uses, via `init_chat_model` on OpenAI's Responses API, which allows tools and reasoning together |
+| `embeddings()` | an `OpenAIEmbeddings` instance |
+| `rule(title)` | prints a section divider so script output reads like a lesson |
+
+### `scripts/corpus.py`: the knowledge base
+
+- `DOCS`: sixteen short, chunk-shaped passages from the Sri Lanka Department
+  of Agriculture's Rice Research and Development Institute. Each has an `id`, a
+  `category` (`variety`, `fertilizer`, `establishment`, `season`, `water`), a
+  `source`, and the `text`.
+- `QUESTIONS`: the lesson's recurring questions, including the Bg 300 urea
+  question and the Bg 352 follow-up.
+
+### `scripts/weather.py`: place name to coordinates
+
+A small wrapper around [Open-Meteo](https://open-meteo.com), a free weather API
+that needs no account or key. `geocode(place)` turns a place name into
+`(latitude, longitude, matched_name)`. `FORECAST_URL` and `TIMEZONE` are
+exported for the weather tools, which live inside the notebooks so you can see
+what a tool actually does.
 
 ---
 
 ## The notebooks
 
-All of them live in `notebooks/`, as marimo `.py` files. Open one with `uv
-run marimo edit notebooks/<file>.py` and run cells top to bottom — markdown
-cells carry the explanation, code cells carry the thing to run. Go in order.
-**`10` creates the Pinecone index that `11` and `12` query.**
+Each notebook arrives in its own pull request. Go through them in order.
 
-| notebook | concept | needs |
-|---|---|---|
-| `00_providers_and_wrappers.py` | SDK, plain HTTP, and why a wrapper exists | OpenAI |
-| `01_chat_and_messages.py` | messages in, a message out; the four types; history | OpenAI |
-| `02_temperature_and_top_p.py` | the two dials — temperature (how random) and top_p (how much of the vocabulary) | OpenAI |
-| `03_limitations.py` | it invents, and you cannot paste everything in | OpenAI |
-| `04_tools_and_toolnode.py` | **`@tool`, `bind_tools`, and a ToolNode running it** | OpenAI |
-| | *its tool calls open-meteo.com for real — free, no key* | |
-| `05_agent_calculator.py` | `create_agent`; four tools chained across one problem | OpenAI |
-| `06_agent_sympy.py` | one tool, any maths; tool is truth, model narrates | OpenAI |
-| `07_agent_notify.py` | a tool with an effect — your phone buzzes | OpenAI + ntfy |
-| `08_embeddings.py` | text becomes 1536 numbers | OpenAI |
-| `09_similarity_and_ann.py` | cosine vs euclidean by hand; O(N) exact search; ANN/HNSW idea via a neighbour-graph hop | — |
-| `10_vector_store.py` | Pinecone through LangChain; documents, metadata, filters | both |
-| `11_rag_query_generation.py` | retrieve then answer — and who writes the query | both |
-| `12_agentic_rag.py` | hand search to the agent; it decides | both |
+<!-- notebook-00 -->
 
-Three files in `scripts/` are not concepts, just shared setup that every
-notebook imports — the first code cell in each notebook puts `scripts/` on
-the import path, so `from config import chat_model` works no matter where
-marimo's working directory happens to be:
+<!-- notebook-01 -->
 
-- `config.py` — model names and key checks
-- `corpus.py` — sixteen passages from the Department of Agriculture
-- `weather.py` — turns a place name into coordinates for the tools in `04` and `07`
+<!-- notebook-02 -->
 
-`09` needs no API key at all — it is local maths and a small neighbour-graph walk.
+<!-- notebook-03 -->
 
----
+<!-- notebook-04 -->
 
-## The spine
+<!-- notebook-05 -->
 
-One question, all the way through:
+<!-- notebook-06 -->
 
-> *I am growing Bg 300 paddy under irrigation in the Dry Zone. How much urea, and when?*
+<!-- notebook-07 -->
 
-1. **`03`** — invented. Fluent, specific, and different every run.
-2. **`11`** — answered correctly, from passages retrieved out of Pinecone.
-3. **`12`** — and the follow-up about **Bg 352**, which `11` cannot answer,
-   works because the agent searches a second time.
+<!-- notebook-08 -->
 
-The real answer, from the RRDI table, for a three-month variety like Bg 300:
+<!-- notebook-09 -->
 
-| when | urea kg/ha |
-|---|---|
-| basal | 55 |
-| 2 weeks | 50 |
-| 4 weeks | 75 |
-| 6 weeks | 65 |
-| **7 weeks** | 35 |
-| **total** | **225** |
+<!-- notebook-10 -->
 
-Bg 352 is a 3.5-month variety, which moves that last dressing to **week 8**.
-Answering it needs two passages joined together, which is why one search fails.
+<!-- notebook-11 -->
 
----
-
-## Two axes, and they are independent
-
-| | where the facts live | who decides to look | Bg 352 |
-|---|---|---|---|
-| `03` | the model's weights | nobody | invents |
-| `11` | Pinecone | your code, once | fails |
-| `12` | Pinecone | the agent | works |
-
-**Where the facts live** is an infrastructure decision.
-**Who decides to look** is an architecture decision.
-
-Neither fixes the other, and most confused arguments about AI systems are two
-people changing different axes.
-
----
-
-## What an agent actually is
-
-A Roomba senses the floor, decides where to go, moves, and looks again — a loop,
-pointed at a goal. A bare language model has none of that. It reads text and
-writes text, once.
-
-`04` gives it the missing three, one at a time:
-
-```
-REASON    the model decides it needs something   →  AIMessage.tool_calls
-ACT       the ToolNode runs your function        →  ToolMessage
-OBSERVE   the result goes back into the messages →  it answers, or asks again
-```
-
-That is ReAct. `create_agent` in `05` is exactly this with the loop already
-written — print `agent.get_graph().draw_ascii()` and you will see a `model` node,
-a `tools` node, and an arrow from tools back to model. The arrow is the loop.
-
----
-
-## Homework
-
-Post in the channel before the next session — this is checked:
-
-1. Your search count and the Bg 352 answer from `12`.
-2. From `06`, a question where the tool's answer and the model's narrated steps
-   disagree. Post both.
-
-Then:
-
-3. In `07`, make the agent over-send: find a question where it pushes to your
-   phone when it should not. Then fix it by editing the docstring only.
-4. In `04`, change `get_rainfall`'s docstring to just `"Get rainfall."` and
-   re-run. The description **is** the prompt.
-5. In `09`, the graph demo links each vector to its three nearest neighbours.
-   Change that 3 to 1 and re-run. What happens to the hop path to the right
-   cluster — and why?
-6. In `10`, add five passages of your own with a new category, then check the
-   filter picks them up. You are starting your FieldOracle corpus.
+<!-- notebook-12 -->
 
 ---
 
 ## Sources
 
-Every figure in `corpus.py` comes from the Sri Lanka Department of Agriculture,
-Rice Research and Development Institute — https://doa.gov.lk.
+Every figure in `scripts/corpus.py` comes from the Sri Lanka Department of
+Agriculture, Rice Research and Development Institute: https://doa.gov.lk.
