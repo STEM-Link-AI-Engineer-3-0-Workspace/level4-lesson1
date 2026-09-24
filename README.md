@@ -201,7 +201,23 @@ message back.
 
 **Needs:** `OPENAI_API_KEY` · **Uses:** `config.chat_model`
 
-<!-- notebook-02 -->
+### `02_temperature_and_top_p.py`: the two sampling dials
+
+Runs one cheap prompt many times under different settings and prints the
+results side by side.
+
+| dial | what it does | in one word |
+|---|---|---|
+| `temperature` | stretches or squashes the probability distribution | how random |
+| `top_p` | cuts away the unlikely words | how many compete |
+
+- A model samples its next token rather than deciding it
+- Each dial alone, then both together
+- The gotcha: while reasoning is on, `top_p` is rejected and even
+  `temperature=0` isn't deterministic, so every model here passes
+  `reasoning_effort="none"`
+
+**Needs:** `OPENAI_API_KEY` · **Uses:** `config.chat_model`
 
 <!-- notebook-03 -->
 
