@@ -192,7 +192,16 @@ Each notebook arrives in its own pull request. Go through them in order.
 
 <!-- notebook-07 -->
 
-<!-- notebook-08 -->
+### `08_embeddings.py`: text becomes numbers
+
+A quick refresher using LangChain's embeddings interface. An embedding places
+text so that things with similar meaning end up close together.
+
+- One sentence in, 1536 numbers out (`embed_query`)
+- Many at once (`embed_documents`)
+- Why this is useful for search
+
+**Needs:** `OPENAI_API_KEY` · **Uses:** `config.embeddings`
 
 <!-- notebook-09 -->
 
