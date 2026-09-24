@@ -176,7 +176,17 @@ what a tool actually does.
 
 Each notebook arrives in its own pull request. Go through them in order.
 
-<!-- notebook-00 -->
+### `00_providers_and_wrappers.py`: why a framework exists at all
+
+Asks the same model the same question three ways (OpenAI's SDK, a raw HTTP
+call, and LangChain) to show what LangChain is standing on and what it saves you.
+
+- The provider's own SDK, then the same call with no SDK at all
+- Every provider shapes its API differently
+- Each provider ships its own LangChain package
+- `init_chat_model("provider:model")` picks the right package for you
+
+**Needs:** `OPENAI_API_KEY` · **Uses:** `config.CHAT_MODEL_RAW`, `config.require`
 
 <!-- notebook-01 -->
 
