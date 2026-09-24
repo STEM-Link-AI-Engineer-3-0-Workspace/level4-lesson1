@@ -242,7 +242,28 @@ The real answer, from the RRDI table, for a three-month variety like Bg 300:
 
 **Needs:** `OPENAI_API_KEY` · **Uses:** `config.chat_model`, `corpus.DOCS`
 
-<!-- notebook-04 -->
+### `04_tools_and_toolnode.py`: tools, and the loop that makes an agent
+
+A bare model has no senses, no actions, and no loop. This notebook adds them
+one at a time, around a rainfall tool that calls Open-Meteo live (free, no key).
+
+- A tool is just a function with `@tool`, and its docstring is the prompt
+- `bind_tools` tells the model the tool exists and gets back `tool_calls`
+- A `ToolNode` executes the call and produces a `ToolMessage`
+- Feed the result back and the model can finally answer
+
+```
+REASON    the model decides it needs something   →  AIMessage.tool_calls
+ACT       the ToolNode runs your function        →  ToolMessage
+OBSERVE   the result goes back into the messages →  it answers, or asks again
+```
+
+That's ReAct.
+
+**Try this:** change `get_rainfall`'s docstring to just `"Get rainfall."` and
+re-run.
+
+**Needs:** `OPENAI_API_KEY` · **Uses:** `config.chat_model`, `weather.geocode`, `weather.FORECAST_URL`, `weather.TIMEZONE`
 
 <!-- notebook-05 -->
 
