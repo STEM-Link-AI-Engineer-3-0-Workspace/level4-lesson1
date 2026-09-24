@@ -182,7 +182,28 @@ Each notebook arrives in its own pull request. Go through them in order.
 
 <!-- notebook-02 -->
 
-<!-- notebook-03 -->
+### `03_limitations.py`: two things a model cannot do
+
+Asks the lesson's question about the Bg 300 urea schedule with no retrieval.
+Write down the **total** urea and the **week** of the last top dressing. You'll
+check both again in `12`.
+
+- **It invents.** The answer is fluent, specific, and different every run.
+- **Pasting everything in doesn't fix it.** Stuffing the corpus into the
+  prompt doesn't scale.
+
+The real answer, from the RRDI table, for a three-month variety like Bg 300:
+
+| when | urea kg/ha |
+|---|---|
+| basal | 55 |
+| 2 weeks | 50 |
+| 4 weeks | 75 |
+| 6 weeks | 65 |
+| **7 weeks** | 35 |
+| **total** | **225** |
+
+**Needs:** `OPENAI_API_KEY` · **Uses:** `config.chat_model`, `corpus.DOCS`
 
 <!-- notebook-04 -->
 
