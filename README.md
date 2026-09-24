@@ -178,7 +178,18 @@ Each notebook arrives in its own pull request. Go through them in order.
 
 <!-- notebook-00 -->
 
-<!-- notebook-01 -->
+### `01_chat_and_messages.py`: messages in, a message out
+
+Everything later is built on this: you send a list of messages and get one
+message back.
+
+- `.invoke()` with a plain string, and what's on the returned `AIMessage`
+- The message roles: `SystemMessage`, `HumanMessage`, `AIMessage`
+- The model remembers nothing between calls
+- History is just a list you keep and resend
+- Putting words in its mouth with a hand-written `AIMessage`
+
+**Needs:** `OPENAI_API_KEY` · **Uses:** `config.chat_model`
 
 <!-- notebook-02 -->
 
