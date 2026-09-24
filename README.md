@@ -200,7 +200,32 @@ Each notebook arrives in its own pull request. Go through them in order.
 
 <!-- notebook-11 -->
 
-<!-- notebook-12 -->
+### `12_agentic_rag.py`: agentic RAG, where you step out of the loop
+
+Search becomes a tool (`search_crop_guide`) and the agent decides whether to
+search, what to search for, and how many times.
+
+- The messy user message from `11`, with no query written by you
+- The Bg 352 question that beat `11` works because the agent searches a
+  second time (Bg 352 is a 3.5-month variety, so the last urea dressing moves
+  to **week 8**)
+- It knows when *not* to search
+- The trace, and the whole session in one table
+
+Two independent axes run across the lesson:
+
+| | where the facts live | who decides to look | Bg 352 |
+|---|---|---|---|
+| `03` | the model's weights | nobody | invents |
+| `11` | Pinecone | your code, once | fails |
+| `12` | Pinecone | the agent | works |
+
+**Where the facts live** is an infrastructure decision. **Who decides to look**
+is an architecture decision. Neither fixes the other.
+
+**Try this:** note your search count and the Bg 352 answer.
+
+**Needs:** `OPENAI_API_KEY`, `PINECONE_API_KEY`, and `10` run first · **Uses:** `config.chat_model`, `config.embeddings`, `config.INDEX_NAME`
 
 ---
 
