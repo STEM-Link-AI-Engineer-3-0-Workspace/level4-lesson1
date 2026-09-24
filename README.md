@@ -198,7 +198,20 @@ Each notebook arrives in its own pull request. Go through them in order.
 
 <!-- notebook-10 -->
 
-<!-- notebook-11 -->
+### `11_rag_query_generation.py`: RAG, and the step everyone skips
+
+Retrieval-Augmented Generation is two steps: search, then answer from what you
+found. Your code controls both.
+
+- The naive version searches with exactly what the user typed
+- Why that searched badly
+- Letting the model write the search query, then comparing
+- Where it still breaks: the Bg 352 follow-up needs two passages joined
+  together, and one search can't find both
+
+This answers the Bg 300 question correctly from retrieved passages, with citations.
+
+**Needs:** `OPENAI_API_KEY`, `PINECONE_API_KEY`, and `10` run first · **Uses:** `config.chat_model`, `config.embeddings`, `config.INDEX_NAME`
 
 <!-- notebook-12 -->
 
