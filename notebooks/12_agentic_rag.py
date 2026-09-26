@@ -61,7 +61,7 @@ def _():
         establishment, water, season.
         """
         SEARCHES.append((query, category))
-        print(f"   >>> search #{len(SEARCHES)}  query={query!r} category={category!r}")
+        print(f">>> search {len(SEARCHES)}: {query} (category: {category})")
 
         docs = store.similarity_search(
             query, k=3, filter={"category": category} if category else None
@@ -98,9 +98,8 @@ def _(SEARCHES, agent):
     )
     SEARCHES.clear()
     main_result = agent.invoke({"messages": [{"role": "user", "content": USER_TEXT}]})
-    print()
     print(main_result["messages"][-1].text)
-    print("\nsearches:", len(SEARCHES))
+    print("searches:", len(SEARCHES))
     return
 
 
@@ -122,11 +121,8 @@ def _(SEARCHES, agent):
     followup_result = agent.invoke({"messages": [{"role": "user", "content":
         "I am growing Bg 352 under irrigation in the Dry Zone. "
         "How much urea, and when is the last top dressing?"}]})
-    print()
     print(followup_result["messages"][-1].text)
-    print("\nsearches:", len(SEARCHES))
-    for _i, (_q, _c) in enumerate(SEARCHES, 1):
-        print(f"   {_i}. {_q!r}  category={_c!r}")
+    print("searches:", len(SEARCHES))
     return
 
 
@@ -149,9 +145,8 @@ def _(SEARCHES, agent):
     SEARCHES.clear()
     offtopic_result = agent.invoke({"messages": [{"role": "user", "content":
         "Hi! What sort of things can you help me with?"}]})
-    print()
-    print(offtopic_result["messages"][-1].text[:220])
-    print("\nsearches:", len(SEARCHES))
+    print(offtopic_result["messages"][-1].text)
+    print("searches:", len(SEARCHES))
     return (offtopic_result,)
 
 
