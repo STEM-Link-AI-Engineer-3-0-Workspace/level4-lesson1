@@ -273,7 +273,20 @@ re-run.
 
 <!-- notebook-08 -->
 
-<!-- notebook-09 -->
+### `09_similarity_and_ann.py`: how "close" is measured, and why big searches cheat
+
+Local maths only. **No API key needed.**
+
+- Cosine vs. euclidean on 2-D vectors small enough to check by hand
+- On unit vectors the two metrics agree
+- Exact search checks every vector: O(N)
+- Approximate search: hop across a neighbour graph instead of looking at everything
+- HNSW, the real version that vector databases use
+
+**Try this:** the graph demo links each vector to its three nearest neighbours.
+Change 3 to 1 and re-run. What happens to the hop path, and why?
+
+**Needs:** nothing · **Uses:** only `numpy`
 
 <!-- notebook-10 -->
 
