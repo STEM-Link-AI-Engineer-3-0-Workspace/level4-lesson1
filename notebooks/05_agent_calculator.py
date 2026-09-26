@@ -52,28 +52,28 @@ def _():
     def add(a: float, b: float) -> float:
         """Add two numbers."""
         CALLS.append(f"add({a}, {b})")
-        print(f"   >>> add({a}, {b}) = {a + b}")
+        print(f">>> add: {a} + {b} = {a + b}")
         return a + b
 
     @tool
     def subtract(a: float, b: float) -> float:
         """Subtract b from a."""
         CALLS.append(f"subtract({a}, {b})")
-        print(f"   >>> subtract({a}, {b}) = {a - b}")
+        print(f">>> subtract: {a} - {b} = {a - b}")
         return a - b
 
     @tool
     def multiply(a: float, b: float) -> float:
         """Multiply two numbers."""
         CALLS.append(f"multiply({a}, {b})")
-        print(f"   >>> multiply({a}, {b}) = {a * b}")
+        print(f">>> multiply: {a} * {b} = {a * b}")
         return a * b
 
     @tool
     def divide(a: float, b: float) -> float:
         """Divide a by b."""
         CALLS.append(f"divide({a}, {b})")
-        print(f"   >>> divide({a}, {b}) = {a / b}")
+        print(f">>> divide: {a} / {b} = {a / b}")
         return a / b
 
     agent = create_agent(
@@ -121,9 +121,8 @@ def _(mo):
 def _(CALLS, agent):
     CALLS.clear()
     simple_result = agent.invoke({"messages": [{"role": "user", "content": "What is 847 plus 1259?"}]})
-    print()
     print(simple_result["messages"][-1].text)
-    print("\ntools used:", CALLS)
+    print("tools used:", CALLS)
     return
 
 
@@ -143,14 +142,9 @@ def _(CALLS, agent):
         "Urea is applied at 225 kg per hectare, and a bag holds 50 kg. "
         "How many bags does he need, and how much is left over?"
     )
-    print("Q:", question)
-    print()
     chain_result = agent.invoke({"messages": [{"role": "user", "content": question}]})
-    print()
     print(chain_result["messages"][-1].text)
-    print("\ntools used, in order:")
-    for _i, _c in enumerate(CALLS, 1):
-        print(f"   {_i}. {_c}")
+    print("tools used, in order:", CALLS)
     return (chain_result,)
 
 
@@ -165,12 +159,12 @@ def _(mo):
 @app.cell
 def _(chain_result):
     for _m in chain_result["messages"]:
-        _kind = type(_m).__name__
+        _name = type(_m).__name__
         if getattr(_m, "tool_calls", None):
-            for _tc in _m.tool_calls:
-                print(f"   {_kind:14s} asks {_tc['name']}({_tc['args']})")
+            for _call in _m.tool_calls:
+                print(_name, "asks for", _call["name"], _call["args"])
         else:
-            print(f"   {_kind:14s} {_m.text[:64]!r}")
+            print(_name, "->", _m.text[:80])
     return
 
 

@@ -72,7 +72,7 @@ def _(mo):
 @app.cell
 def _(HumanMessage, QUESTION, SYSTEM, model):
     for _attempt in (1, 2, 3):
-        print(f"--- attempt {_attempt} " + "-" * 50)
+        print("--- attempt", _attempt)
         print(model.invoke([SYSTEM, HumanMessage(QUESTION)]).text[:520])
         print()
     return
@@ -135,10 +135,10 @@ def _(DOCS, grounded):
     corpus_tokens = grounded.usage_metadata["input_tokens"]
     per_passage = corpus_tokens / len(DOCS)
 
-    print(f"{'corpus size':>14}  {'input tokens':>14}  {'per question':>14}")
     for n in (16, 1_000, 25_000, 400_000):
         tokens = int(per_passage * n)
-        print(f"{n:>14,}  {tokens:>14,}  {'$' + format(tokens/1e6*0.15, '.4f'):>14}")
+        cost = round(tokens / 1_000_000 * 0.15, 4)
+        print(n, "passages:", tokens, "input tokens, cost per question in USD:", cost)
     return
 
 
@@ -149,7 +149,7 @@ def _(mo):
        guide, policy document, and farm record the department publishes. That
        does not fit at any context length you can buy.
     2. **You pay for it on every single call.** Not once — every question,
-       every user, forever. Look at the last row above.
+       every user, forever. Look at the last line above.
     3. **Accuracy falls as you fill the window.** The counter-intuitive one:
        padding a prompt with material nobody asked about makes answers worse,
        not safer.

@@ -87,7 +87,7 @@ def _(CALLS, FORECAST_URL, TIMEZONE, geocode, tool):
     def get_rainfall(district: str) -> str:
         """Get the rainfall in the last 7 days for a Sri Lankan district, in mm."""
         CALLS.append(district)
-        print(f"   >>> get_rainfall RAN (call {len(CALLS)}) district={district!r}")
+        print(f">>> get_rainfall ran (call {len(CALLS)}): {district}")
 
         lat, lon, name = geocode(district)
         daily = requests.get(
@@ -115,9 +115,9 @@ def _(CALLS, FORECAST_URL, TIMEZONE, geocode, tool):
 
 @app.cell
 def _(get_rainfall):
-    print("name        :", get_rainfall.name)
-    print("description :", get_rainfall.description)
-    print("args        :", get_rainfall.args)
+    print("name:", get_rainfall.name)
+    print("description:", get_rainfall.description)
+    print("args:", get_rainfall.args)
     return
 
 
@@ -150,13 +150,11 @@ def _(CALLS, HumanMessage, SystemMessage, get_rainfall, model):
     CALLS.clear()
     reply = model_with_tools.invoke(messages)
 
-    print("type            :", type(reply).__name__)
-    print("reply.text      :", repr(reply.text))
-    print("reply.tool_calls:")
-    for _tc in reply.tool_calls:
-        print("   ", _tc)
+    print("type:", type(reply).__name__)
+    print("reply.text:", repr(reply.text))
+    print("reply.tool_calls:", reply.tool_calls)
     print()
-    print("CALLS =", len(CALLS), "   <-- read this number")
+    print("CALLS =", len(CALLS), " <-- read this number")
     return messages, model_with_tools, reply
 
 
@@ -202,21 +200,20 @@ def _(CALLS, CONF, CONFIG_KEY_RUNTIME, DEFAULT_RUNTIME, ToolNode, get_rainfall, 
     CALLS.clear()
     observations = tool_node.invoke(messages + [reply], config=NO_GRAPH)
 
-    print("CALLS =", len(CALLS), "   <-- now it ran")
+    print("CALLS =", len(CALLS), " <-- now it ran")
     print()
     print("it returned a", type(observations).__name__, "of", len(observations), "message(s):")
     for _m in observations:
-        print(f"   {type(_m).__name__:14s} {_m.content[:60]!r}")
+        print(type(_m).__name__, "->", _m.content)
     return (observations,)
 
 
 @app.cell
 def _(observations):
     observation = observations[0]
-    print("the ToolMessage it produced:")
-    print("   content      :", observation.content)
-    print("   name         :", observation.name)
-    print("   tool_call_id :", observation.tool_call_id, " <- matches the request id")
+    print("content:", observation.content)
+    print("name:", observation.name)
+    print("tool_call_id:", observation.tool_call_id, " <- matches the request id")
     return
 
 
@@ -240,7 +237,7 @@ def _(messages, observations, reply):
     conversation = messages + [reply] + observations
 
     for _m in conversation:
-        print(f"   {type(_m).__name__:14s} {_m.text[:56]!r}")
+        print(type(_m).__name__, "->", _m.text[:60])
     return (conversation,)
 
 
