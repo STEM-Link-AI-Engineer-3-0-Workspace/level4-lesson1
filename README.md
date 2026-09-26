@@ -427,7 +427,25 @@ answer in a shape you define, and hands back a Python object instead of text.
 
 **Needs:** `OPENAI_API_KEY` · **Uses:** `config.chat_model`, `corpus.DOCS`, `helpers.print_trace`
 
-<!-- notebook-14 -->
+### `14_breakout_trip_desk.py`: breakout, the trip desk
+
+A group exercise, and nothing to do with paddy. A customer wants the train
+from Colombo to Ella on Saturday, in the best class they can actually get, and
+a hotel rated at least 4, within a budget. The timetable and hotel list are
+made-up data inside the notebook, so there is no API to fail.
+
+The tool logic is written for you as plain functions. Your group:
+
+- turns them into tools with `@tool` and a docstring the model can use
+- writes a `calculate` tool from scratch
+- writes the `TripPlan` schema the answer comes back in
+- writes a system prompt with no facts in it
+- wires it together with `create_agent(..., response_format=TripPlan)`
+
+A scorecard checks the plan against a hashed answer key. Your lecturer then
+runs a hidden round of three more customers against your agent, unchanged.
+
+**Needs:** `OPENAI_API_KEY` · **Uses:** `config.chat_model`, `trip_desk.check_prompt`, `trip_desk.scorecard` (the breakout's checks, kept out of the notebook)
 
 ---
 
