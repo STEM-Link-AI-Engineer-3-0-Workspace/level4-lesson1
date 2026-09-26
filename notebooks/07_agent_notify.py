@@ -50,7 +50,7 @@ def _():
     from langchain.tools import tool
 
     from config import chat_model, require
-    from weather import FORECAST_URL, TIMEZONE, geocode
+    from weather import get_forecast  # the rainfall tool, kept in scripts/weather.py
 
     NTFY_TOPIC = require("NTFY_TOPIC")
     SENT = []
@@ -71,26 +71,6 @@ def _():
         )
         response.raise_for_status()
         return f"Sent to the farmer's phone (status {response.status_code})."
-
-    @tool
-    def get_forecast(district: str) -> str:
-        """Get the 48-hour rainfall forecast for a Sri Lankan district, in mm."""
-        print(f">>> get_forecast: {district}")
-
-        lat, lon, name = geocode(district)
-        hourly = requests.get(
-            FORECAST_URL,
-            params={
-                "latitude": lat,
-                "longitude": lon,
-                "hourly": "precipitation",
-                "timezone": TIMEZONE,
-                "forecast_hours": 48,     # the next 48 hours, starting now
-            },
-            timeout=20,
-        ).json()["hourly"]
-
-        return f"{name}: {sum(hourly['precipitation']):.1f} mm expected in the next 48 hours."
 
     agent = create_agent(
         chat_model(),

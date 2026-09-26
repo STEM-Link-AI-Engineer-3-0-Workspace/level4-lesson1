@@ -162,12 +162,13 @@ code cell in every notebook adds `scripts/` to the import path, so
 - `QUESTIONS`: the lesson's recurring questions, including the Bg 300 urea
   question and the Bg 352 follow-up.
 
-### `scripts/weather.py`: place name to coordinates
+### `scripts/weather.py`: place name to coordinates, and the forecast tool
 
 A small wrapper around [Open-Meteo](https://open-meteo.com), a free weather API
 that needs no account or key. `geocode(place)` turns a place name into
-`(latitude, longitude, matched_name)`. `FORECAST_URL` and `TIMEZONE` are
-exported for the weather tools, which live inside the notebooks so you can see
+`(latitude, longitude, matched_name)`. `get_forecast(district)` is the 48-hour
+rainfall tool that `07` gives its agent. `04` writes its own rainfall tool out
+in full, using `FORECAST_URL` and `TIMEZONE` from here, so you can see
 what a tool actually does.
 
 ---
@@ -207,7 +208,7 @@ unique and don't send anything private.
 **Try this:** find a question where the agent notifies you when it shouldn't,
 then fix it by editing only the docstring.
 
-**Needs:** `OPENAI_API_KEY`, `NTFY_TOPIC` · **Uses:** `config.chat_model`, `config.require`, `weather.geocode`, `weather.FORECAST_URL`, `weather.TIMEZONE`
+**Needs:** `OPENAI_API_KEY`, `NTFY_TOPIC` · **Uses:** `config.chat_model`, `config.require`, `weather.get_forecast`
 
 <!-- notebook-08 -->
 
