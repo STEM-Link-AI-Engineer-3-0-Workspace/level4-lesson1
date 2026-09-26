@@ -88,9 +88,9 @@ def _(EMBED_DIM, INDEX_NAME, Pinecone, ServerlessSpec, require):
             metric="cosine",              # the metric you compared by hand in lesson 09
             spec=ServerlessSpec(cloud="aws", region="us-east-1"),
         )
-        print(f"created {INDEX_NAME!r}")
+        print("created index:", INDEX_NAME)
     else:
-        print(f"{INDEX_NAME!r} already exists")
+        print("index already exists:", INDEX_NAME)
     return (pc,)
 
 
@@ -122,9 +122,9 @@ def _(DOCS, Document):
     ]
 
     example = documents[4]
-    print("page_content:", example.page_content[:90], "...")
-    print("metadata    :", example.metadata)
-    print("id          :", example.id)
+    print("page_content:", example.page_content)
+    print("metadata:", example.metadata)
+    print("id:", example.id)
     return (documents,)
 
 
@@ -143,10 +143,8 @@ def _(INDEX_NAME, PineconeVectorStore, documents, embeddings):
     store = PineconeVectorStore(index_name=INDEX_NAME, embedding=embeddings())
     store.add_documents(documents)
 
-    print("add_documents did three things you did by hand in an earlier level:")
-    print("  1. embedded every page_content")
-    print("  2. attached the metadata")
-    print("  3. upserted the lot into Pinecone")
+    print("add_documents embedded every page_content, attached its metadata,")
+    print("and upserted it into Pinecone. You did those three steps by hand in an earlier level.")
     return (store,)
 
 
@@ -159,7 +157,7 @@ def _(INDEX_NAME, documents, pc, time):
         if count >= len(documents):
             break
         time.sleep(1)
-    print(f"index now holds {count} vectors -- on a server, not in this process")
+    print("vectors in the index:", count)
     return
 
 
@@ -176,10 +174,10 @@ def _(store):
     def show(results):
         """Print (Document, score) pairs, one per line."""
         for doc, score in results:
-            print(f"  {score:.4f}  {doc.id:24s} [{doc.metadata['category']}]")
+            print(round(score, 3), doc.id, doc.metadata["category"])
 
     query = "How much urea for a three month variety, and when?"
-    print("query:", query, "\n")
+    print("query:", query)
     show(store.similarity_search_with_score(query, k=5))
     return query, show
 
@@ -200,7 +198,8 @@ def _(query, show, store):
     print("everything:")
     show(store.similarity_search_with_score(query, k=3))
 
-    print("\nfertilizer only:")
+    print()
+    print("fertilizer only:")
     show(store.similarity_search_with_score(query, k=3, filter={"category": "fertilizer"}))
     return
 
@@ -221,9 +220,9 @@ def _(mo):
 def _(query, store):
     retriever = store.as_retriever(search_kwargs={"k": 3})
     found = retriever.invoke(query)
-    print("as_retriever gives you something with .invoke(str) -> list[Document]:\n")
+    print("retriever.invoke(query) returned", len(found), "Documents:")
     for _doc in found:
-        print(f"  {_doc.id:24s} {_doc.page_content[:52]}...")
+        print(_doc.id, "-", _doc.page_content[:60])
     return
 
 
