@@ -1,0 +1,264 @@
+import marimo
+
+__generated_with = "0.24.2"
+app = marimo.App(width="medium")
+
+
+@app.cell
+def _():
+    import marimo as mo
+
+    return (mo,)
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    # 09 · How "Close" Is Measured, and Why Big Searches Cheat
+
+    Two ideas, in this order:
+
+    1. cosine vs. euclidean, on 2-D vectors small enough to check by hand
+    2. exact search is slow, and the trick every vector database uses instead
+
+    No API key needed. Everything here is local, and you can check the first
+    two sections' numbers with a pen.
+    """)
+    return
+
+
+@app.cell
+def _():
+    import time
+
+    import numpy as np
+
+    return np, time
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    ## 1 · Two ways to say "close"
+
+    `a` and `b` point in the same direction, but `b` is three times longer.
+    `c` is the same length as `a`, but points in a completely different
+    direction.
+    """)
+    return
+
+
+@app.cell
+def _(np):
+    a = np.array([2.0, 2.0])     # up-right
+    b = np.array([6.0, 6.0])     # same direction as a, longer
+    c = np.array([2.0, -2.0])    # same length as a, opposite direction
+
+    print("a =", a)
+    print("b =", b, " same direction as a, three times longer")
+    print("c =", c, " same length as a, different direction")
+    return a, b, c
+
+
+@app.cell
+def _(a, b, c, np):
+    def euclidean(p, q):
+        """Straight-line distance. Lower is closer."""
+        return float(np.linalg.norm(p - q))
+
+    def cosine_similarity(p, q):
+        """Angle between them: 1 = same direction, 0 = perpendicular, -1 = opposite."""
+        return float(np.dot(p, q) / (np.linalg.norm(p) * np.linalg.norm(q)))
+
+    print("a vs b:  euclidean", round(euclidean(a, b), 3), "  cosine", round(cosine_similarity(a, b), 3))
+    print("a vs c:  euclidean", round(euclidean(a, c), 3), "  cosine", round(cosine_similarity(a, c), 3))
+    return cosine_similarity, euclidean
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    Read that carefully. By euclidean distance, `a` is closer to `c` than to
+    `b`. By cosine, `a` is **identical** to `b` (1.0) and **perpendicular** to
+    `c` (0.0).
+
+    Cosine ignores length and only looks at direction — exactly what text
+    needs: a long paragraph and a short sentence about the same thing should
+    match, even though one is ten times longer. That's why text vector stores
+    default to cosine.
+
+    ## 2 · On unit vectors, the two metrics agree
+    """)
+    return
+
+
+@app.cell
+def _(a, b, c, cosine_similarity, euclidean, np):
+    au, bu, cu = (v / np.linalg.norm(v) for v in (a, b, c))
+    print("after dividing each vector by its own length:")
+    print("a vs b:  euclidean", round(euclidean(au, bu), 3), "  cosine", round(cosine_similarity(au, bu), 3))
+    print("a vs c:  euclidean", round(euclidean(au, cu), 3), "  cosine", round(cosine_similarity(au, cu), 3))
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    Same ranking under both metrics. That's why stores usually normalise
+    vectors on the way in — then a plain dot product equals cosine similarity,
+    and a dot product is the cheapest thing a computer computes.
+
+    ## 3 · Exact search checks every vector
+
+    k-nearest-neighbours, done exactly, means: score the query against every
+    vector you have and keep the best `k`. Foolproof, because nothing is
+    skipped — and O(N): double the data, double the work.
+    """)
+    return
+
+
+@app.cell
+def _(np, time):
+    DIM = 256
+    rng = np.random.default_rng(0)
+
+    def exact_knn(data, query, k=10):
+        """Brute force: score every vector against the query, keep the top k."""
+        scores = data @ query
+        return np.argsort(scores)[::-1][:k]
+
+    def ms_per_query(n, repeats=20):
+        """Time exact_knn over n random unit vectors, in milliseconds per query."""
+        data = rng.random((n, DIM), dtype=np.float32)
+        data /= np.linalg.norm(data, axis=1, keepdims=True)
+        start = time.perf_counter()
+        for _ in range(repeats):
+            exact_knn(data, data[0])
+        return (time.perf_counter() - start) / repeats * 1000
+
+    return (ms_per_query,)
+
+
+@app.cell
+def _(ms_per_query):
+    for _n in (1_000, 20_000, 100_000):
+        print(_n, "vectors:", round(ms_per_query(_n), 2), "ms per query")
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    Linear, as promised. Now imagine 50 million rows and 200 people searching
+    at once. This section is the whole reason vector databases exist.
+
+    ## 4 · Approximate search: hop, don't look
+
+    Approximate Nearest Neighbour (ANN) search gives up the guarantee "these
+    are the best k" in exchange for not looking at most of the data.
+
+    The whole trick fits in one sentence: before searching, **connect** each
+    vector to a few of its neighbours; a query then hops from vector to vector
+    along those links, always to the neighbour most like the query, and stops
+    when no hop improves it.
+
+    Watch it happen on made-up data — 45 vectors in three topic clusters.
+    """)
+    return
+
+
+@app.cell
+def _(np):
+    # 45 made-up vectors in three clusters of 15, scaled to length 1
+    demo_rng = np.random.default_rng(7)
+    centres = np.array([[0.0, 0.0], [5.0, 0.0], [2.0, 5.0]])
+    points = np.vstack([c + demo_rng.normal(0, 0.4, (15, 2)) for c in centres])
+    points = points / np.linalg.norm(points, axis=1, keepdims=True)
+    cluster = np.repeat([0, 1, 2], 15)
+
+    # the links: every vector remembers its 3 most similar vectors
+    similarity = points @ points.T
+    np.fill_diagonal(similarity, -np.inf)
+    neighbours = np.argsort(similarity, axis=1)[:, ::-1][:, :3]
+
+    # a query that sits inside cluster 2
+    q = centres[2] + np.array([0.2, -0.3])
+    q = q / np.linalg.norm(q)
+    return cluster, neighbours, points, q
+
+
+@app.cell
+def _(neighbours, points, q):
+    def hop_search(start):
+        """Hop to whichever linked vector is most like q. Stop when no link is closer."""
+        path = [start]
+        while True:
+            here = path[-1]
+            best_link = max(neighbours[here], key=lambda v: points[v] @ q)
+            if points[best_link] @ q <= points[here] @ q:
+                return path
+            path.append(best_link)
+
+    path = hop_search(start=0)
+    return (path,)
+
+
+@app.cell
+def _(cluster, np, path, points, q):
+    scores = points @ q          # every vector's similarity to the query
+    best = int(np.argmax(scores))
+
+    print("the search hopped through:")
+    for _v in path:
+        print("  vector", _v, " cluster", cluster[_v], " similarity", round(scores[_v], 3))
+    print("stopped: no link is closer to the query")
+    print()
+    print("vectors examined:", len(path), "of", len(points))
+    print("checking every vector instead: best is vector", best, " cluster", cluster[best], " similarity", round(scores[best], 3))
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    Four hops, less than a tenth of the data, and it landed in the right
+    cluster with a score close to the true best. Sometimes it lands a slot off
+    the exact answer. That's the whole trade: a pinch of accuracy for a lot of
+    speed.
+
+    ## 5 · HNSW: the real one
+
+    Real vector databases run **HNSW** — Hierarchical Navigable Small World.
+    It's the graph idea above plus two upgrades:
+
+    - **layers** — several copies of the graph, stacked. The top layer has
+      fewer, longer links — the motorway. Lower layers have more, shorter
+      links — the streets. A query enters on the motorway, travels far fast,
+      and drops down to a lower layer to home in on the street.
+    - **a dial** — the algorithm peeks at `k` candidates, then `2k`, then `4k`
+      ... Its "how hard do I look" knob is called `ef`. Peek more: slower and
+      nearer-perfect. Peek less: fast and quietly wrong sometimes.
+
+    You will never write HNSW yourself. Pinecone runs one for you, and
+    LangChain hides whichever store you pick behind the same three calls —
+    `add_documents`, `similarity_search`, `as_retriever`. That's the whole plot
+    of the next lesson.
+
+    | term | meaning |
+    |---|---|
+    | KNN | exact, O(N), correct until it's too slow |
+    | ANN | the family of approximate methods — what everyone uses |
+    | HNSW | the specific one inside Pinecone, FAISS, Chroma, and friends |
+
+    One consequence worth keeping: your retrieval can be slightly wrong for
+    reasons that have nothing to do with your embeddings or your prompt.
+
+    ---
+    **Next: `10_vector_store.py`** — the same idea, on a server, wrapped by
+    LangChain.
+    """)
+    return
+
+
+if __name__ == "__main__":
+    app.run()

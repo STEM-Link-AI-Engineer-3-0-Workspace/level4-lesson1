@@ -163,12 +163,13 @@ code cell in every notebook adds `scripts/` to the import path, so
 - `QUESTIONS`: the lesson's recurring questions, including the Bg 300 urea
   question and the Bg 352 follow-up.
 
-### `scripts/weather.py`: place name to coordinates
+### `scripts/weather.py`: place name to coordinates, and the forecast tool
 
 A small wrapper around [Open-Meteo](https://open-meteo.com), a free weather API
 that needs no account or key. `geocode(place)` turns a place name into
-`(latitude, longitude, matched_name)`. `FORECAST_URL` and `TIMEZONE` are
-exported for the weather tools, which live inside the notebooks so you can see
+`(latitude, longitude, matched_name)`. `get_forecast(district)` is the 48-hour
+rainfall tool that `07` gives its agent. `04` writes its own rainfall tool out
+in full, using `FORECAST_URL` and `TIMEZONE` from here, so you can see
 what a tool actually does.
 
 ### `scripts/helpers.py`: small shared helpers
@@ -187,29 +188,201 @@ Things you see written out in full once, then reuse so later notebooks stay shor
 
 Each notebook arrives in its own pull request. Go through them in order.
 
-<!-- notebook-00 -->
+### `00_providers_and_wrappers.py`: why a framework exists at all
 
-<!-- notebook-01 -->
+Asks the same model the same question three ways (OpenAI's SDK, a raw HTTP
+call, and LangChain) to show what LangChain is standing on and what it saves you.
 
-<!-- notebook-02 -->
+- The provider's own SDK, then the same call with no SDK at all
+- Every provider shapes its API differently
+- Each provider ships its own LangChain package
+- `init_chat_model("provider:model")` picks the right package for you
 
-<!-- notebook-03 -->
+**Needs:** `OPENAI_API_KEY` · **Uses:** `config.CHAT_MODEL_RAW`, `config.require`
 
-<!-- notebook-04 -->
+### `01_chat_and_messages.py`: messages in, a message out
 
-<!-- notebook-05 -->
+Everything later is built on this: you send a list of messages and get one
+message back.
 
-<!-- notebook-06 -->
+- `.invoke()` with a plain string, and what's on the returned `AIMessage`
+- The message roles: `SystemMessage`, `HumanMessage`, `AIMessage`
+- The model remembers nothing between calls
+- History is just a list you keep and resend
+- Putting words in its mouth with a hand-written `AIMessage`
 
-<!-- notebook-07 -->
+**Needs:** `OPENAI_API_KEY` · **Uses:** `config.chat_model`
 
-<!-- notebook-08 -->
+### `02_temperature_and_top_p.py`: the two sampling dials
 
-<!-- notebook-09 -->
+Runs one cheap prompt many times under different settings and prints the
+results side by side.
 
-<!-- notebook-10 -->
+| dial | what it does | in one word |
+|---|---|---|
+| `temperature` | stretches or squashes the probability distribution | how random |
+| `top_p` | cuts away the unlikely words | how many compete |
 
-<!-- notebook-11 -->
+- A model samples its next token rather than deciding it
+- Each dial alone, then both together
+- The gotcha: while reasoning is on, `top_p` is rejected and even
+  `temperature=0` isn't deterministic, so every model here passes
+  `reasoning_effort="none"`
+
+**Needs:** `OPENAI_API_KEY` · **Uses:** `config.chat_model`
+
+### `03_limitations.py`: two things a model cannot do
+
+Asks the lesson's question about the Bg 300 urea schedule with no retrieval.
+Write down the **total** urea and the **week** of the last top dressing. You'll
+check both again in `12`.
+
+- **It invents.** The answer is fluent, specific, and different every run.
+- **Pasting everything in doesn't fix it.** Stuffing the corpus into the
+  prompt doesn't scale.
+
+The real answer, from the RRDI table, for a three-month variety like Bg 300:
+
+| when | urea kg/ha |
+|---|---|
+| basal | 55 |
+| 2 weeks | 50 |
+| 4 weeks | 75 |
+| 6 weeks | 65 |
+| **7 weeks** | 35 |
+| **total** | **225** |
+
+**Needs:** `OPENAI_API_KEY` · **Uses:** `config.chat_model`, `corpus.DOCS`
+
+### `04_tools_and_toolnode.py`: tools, and the loop that makes an agent
+
+A bare model has no senses, no actions, and no loop. This notebook adds them
+one at a time, around a rainfall tool that calls Open-Meteo live (free, no key).
+
+- A tool is just a function with `@tool`, and its docstring is the prompt
+- `bind_tools` tells the model the tool exists and gets back `tool_calls`
+- A `ToolNode` executes the call and produces a `ToolMessage`
+- Feed the result back and the model can finally answer
+
+```
+REASON    the model decides it needs something   →  AIMessage.tool_calls
+ACT       the ToolNode runs your function        →  ToolMessage
+OBSERVE   the result goes back into the messages →  it answers, or asks again
+```
+
+That's ReAct.
+
+**Try this:** change `get_rainfall`'s docstring to just `"Get rainfall."` and
+re-run.
+
+**Needs:** `OPENAI_API_KEY` · **Uses:** `config.chat_model`, `weather.geocode`, `weather.FORECAST_URL`, `weather.TIMEZONE`
+
+### `05_agent_calculator.py`: `create_agent` writes the loop for you
+
+In `04` you ran the loop by hand, once. `create_agent` repeats it until the
+model stops asking. Four deliberately trivial arithmetic tools keep the focus
+on the loop.
+
+- An agent is a graph: print `agent.get_graph().draw_ascii()` to see the
+  `model` node, the `tools` node, and the arrow back (that arrow is the loop)
+- One tool, one step, then four tools chained across one problem
+- Reading the message trace
+
+**Needs:** `OPENAI_API_KEY` · **Uses:** `config.chat_model`
+
+### `06_agent_sympy.py`: one tool, any maths, and who to believe
+
+Replaces four toy tools with one SymPy tool that evaluates, differentiates,
+integrates, solves, and simplifies **exactly**.
+
+- Arithmetic, differentiation, and integration through one tool
+- The tool is ground truth and the model is the narrator: SymPy returns the
+  answer, the model explains the steps
+- Catching the model narrating steps that don't match the tool's answer
+
+**Try this:** find a question where the tool's answer and the model's narrated
+steps disagree.
+
+**Needs:** `OPENAI_API_KEY` · **Uses:** `config.chat_model`
+
+### `07_agent_notify.py`: an agent with a real-world effect
+
+Every tool so far returned information. This one makes your phone buzz, using
+two tools: `get_forecast` (Open-Meteo) and `send_alert`, which pushes a
+notification through [ntfy](https://ntfy.sh).
+
+**Setup:** install the ntfy app, subscribe to a topic name you invent, and put
+the same name in `.env` as `NTFY_TOPIC`. ntfy.sh is public, so keep the topic
+unique and don't send anything private.
+
+- A question that needs both tools (forecast, then notify)
+- What changes when a tool has side effects
+- Trying to break it
+
+**Try this:** find a question where the agent notifies you when it shouldn't,
+then fix it by editing only the docstring.
+
+**Needs:** `OPENAI_API_KEY`, `NTFY_TOPIC` · **Uses:** `config.chat_model`, `config.require`, `weather.get_forecast`
+
+### `08_embeddings.py`: text becomes numbers
+
+A quick refresher using LangChain's embeddings interface. An embedding places
+text so that things with similar meaning end up close together.
+
+- One sentence in, 1536 numbers out (`embed_query`)
+- Many at once (`embed_documents`)
+- Why this is useful for search
+
+**Needs:** `OPENAI_API_KEY` · **Uses:** `config.embeddings`
+
+### `09_similarity_and_ann.py`: how "close" is measured, and why big searches cheat
+
+Local maths only. **No API key needed.**
+
+- Cosine vs. euclidean on 2-D vectors small enough to check by hand
+- On unit vectors the two metrics agree
+- Exact search checks every vector: O(N)
+- Approximate search: hop across a neighbour graph instead of looking at everything
+- HNSW, the real version that vector databases use
+
+**Try this:** the graph demo links each vector to its three nearest neighbours.
+Change 3 to 1 and re-run. What happens to the hop path, and why?
+
+**Needs:** nothing · **Uses:** only `numpy`
+
+### `10_vector_store.py`: a managed vector store, through LangChain
+
+> **Run this once before `11` and `12`.** It creates and fills the Pinecone
+> index they both query.
+
+`PineconeVectorStore` runs HNSW for you, and LangChain keeps the code the same
+shape for any store. Swap in FAISS or Chroma and the rest is unchanged.
+
+- Create the serverless index (`INDEX_NAME`, `EMBED_DIM`)
+- `Document`s with metadata, not bare strings
+- Embed and store in one call, then search
+- Filter on metadata (`category`)
+- The same store as a retriever
+
+**Try this:** add five passages of your own with a new category and check the
+filter picks them up.
+
+**Needs:** `OPENAI_API_KEY`, `PINECONE_API_KEY` · **Uses:** `config.embeddings`, `config.INDEX_NAME`, `config.EMBED_DIM`, `corpus.DOCS`
+
+### `11_rag_query_generation.py`: RAG, and the step everyone skips
+
+Retrieval-Augmented Generation is two steps: search, then answer from what you
+found. Your code controls both.
+
+- The naive version searches with exactly what the user typed
+- Why that searched badly
+- Letting the model write the search query, then comparing
+- Where it still breaks: the Bg 352 follow-up needs two passages joined
+  together, and one search can't find both
+
+This answers the Bg 300 question correctly from retrieved passages, with citations.
+
+**Needs:** `OPENAI_API_KEY`, `PINECONE_API_KEY`, and `10` run first · **Uses:** `config.chat_model`, `helpers.vector_store`, `helpers.format_docs`
 
 ### `12_agentic_rag.py`: agentic RAG, where you step out of the loop
 
