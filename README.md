@@ -275,7 +275,24 @@ re-run.
 
 <!-- notebook-09 -->
 
-<!-- notebook-10 -->
+### `10_vector_store.py`: a managed vector store, through LangChain
+
+> **Run this once before `11` and `12`.** It creates and fills the Pinecone
+> index they both query.
+
+`PineconeVectorStore` runs HNSW for you, and LangChain keeps the code the same
+shape for any store. Swap in FAISS or Chroma and the rest is unchanged.
+
+- Create the serverless index (`INDEX_NAME`, `EMBED_DIM`)
+- `Document`s with metadata, not bare strings
+- Embed and store in one call, then search
+- Filter on metadata (`category`)
+- The same store as a retriever
+
+**Try this:** add five passages of your own with a new category and check the
+filter picks them up.
+
+**Needs:** `OPENAI_API_KEY`, `PINECONE_API_KEY` · **Uses:** `config.embeddings`, `config.INDEX_NAME`, `config.EMBED_DIM`, `corpus.DOCS`
 
 <!-- notebook-11 -->
 
