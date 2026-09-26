@@ -176,17 +176,107 @@ what a tool actually does.
 
 Each notebook arrives in its own pull request. Go through them in order.
 
-<!-- notebook-00 -->
+### `00_providers_and_wrappers.py`: why a framework exists at all
 
-<!-- notebook-01 -->
+Asks the same model the same question three ways (OpenAI's SDK, a raw HTTP
+call, and LangChain) to show what LangChain is standing on and what it saves you.
 
-<!-- notebook-02 -->
+- The provider's own SDK, then the same call with no SDK at all
+- Every provider shapes its API differently
+- Each provider ships its own LangChain package
+- `init_chat_model("provider:model")` picks the right package for you
 
-<!-- notebook-03 -->
+**Needs:** `OPENAI_API_KEY` · **Uses:** `config.CHAT_MODEL_RAW`, `config.require`
 
-<!-- notebook-04 -->
+### `01_chat_and_messages.py`: messages in, a message out
 
-<!-- notebook-05 -->
+Everything later is built on this: you send a list of messages and get one
+message back.
+
+- `.invoke()` with a plain string, and what's on the returned `AIMessage`
+- The message roles: `SystemMessage`, `HumanMessage`, `AIMessage`
+- The model remembers nothing between calls
+- History is just a list you keep and resend
+- Putting words in its mouth with a hand-written `AIMessage`
+
+**Needs:** `OPENAI_API_KEY` · **Uses:** `config.chat_model`
+
+### `02_temperature_and_top_p.py`: the two sampling dials
+
+Runs one cheap prompt many times under different settings and prints the
+results side by side.
+
+| dial | what it does | in one word |
+|---|---|---|
+| `temperature` | stretches or squashes the probability distribution | how random |
+| `top_p` | cuts away the unlikely words | how many compete |
+
+- A model samples its next token rather than deciding it
+- Each dial alone, then both together
+- The gotcha: while reasoning is on, `top_p` is rejected and even
+  `temperature=0` isn't deterministic, so every model here passes
+  `reasoning_effort="none"`
+
+**Needs:** `OPENAI_API_KEY` · **Uses:** `config.chat_model`
+
+### `03_limitations.py`: two things a model cannot do
+
+Asks the lesson's question about the Bg 300 urea schedule with no retrieval.
+Write down the **total** urea and the **week** of the last top dressing. You'll
+check both again in `12`.
+
+- **It invents.** The answer is fluent, specific, and different every run.
+- **Pasting everything in doesn't fix it.** Stuffing the corpus into the
+  prompt doesn't scale.
+
+The real answer, from the RRDI table, for a three-month variety like Bg 300:
+
+| when | urea kg/ha |
+|---|---|
+| basal | 55 |
+| 2 weeks | 50 |
+| 4 weeks | 75 |
+| 6 weeks | 65 |
+| **7 weeks** | 35 |
+| **total** | **225** |
+
+**Needs:** `OPENAI_API_KEY` · **Uses:** `config.chat_model`, `corpus.DOCS`
+
+### `04_tools_and_toolnode.py`: tools, and the loop that makes an agent
+
+A bare model has no senses, no actions, and no loop. This notebook adds them
+one at a time, around a rainfall tool that calls Open-Meteo live (free, no key).
+
+- A tool is just a function with `@tool`, and its docstring is the prompt
+- `bind_tools` tells the model the tool exists and gets back `tool_calls`
+- A `ToolNode` executes the call and produces a `ToolMessage`
+- Feed the result back and the model can finally answer
+
+```
+REASON    the model decides it needs something   →  AIMessage.tool_calls
+ACT       the ToolNode runs your function        →  ToolMessage
+OBSERVE   the result goes back into the messages →  it answers, or asks again
+```
+
+That's ReAct.
+
+**Try this:** change `get_rainfall`'s docstring to just `"Get rainfall."` and
+re-run.
+
+**Needs:** `OPENAI_API_KEY` · **Uses:** `config.chat_model`, `weather.geocode`, `weather.FORECAST_URL`, `weather.TIMEZONE`
+
+### `05_agent_calculator.py`: `create_agent` writes the loop for you
+
+In `04` you ran the loop by hand, once. `create_agent` repeats it until the
+model stops asking. Four deliberately trivial arithmetic tools keep the focus
+on the loop.
+
+- An agent is a graph: print `agent.get_graph().draw_ascii()` to see the
+  `model` node, the `tools` node, and the arrow back (that arrow is the loop)
+- One tool, one step, then four tools chained across one problem
+- Reading the message trace
+
+**Needs:** `OPENAI_API_KEY` · **Uses:** `config.chat_model`
 
 ### `06_agent_sympy.py`: one tool, any maths, and who to believe
 
