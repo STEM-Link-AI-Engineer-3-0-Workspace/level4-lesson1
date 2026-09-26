@@ -59,9 +59,9 @@ def _(embedder):
     text = "Apply 55 kg/ha of urea as a basal dressing."
     vector = embedder.embed_query(text)
 
-    print("input  :", repr(text))
-    print("output : a list of", len(vector), "floats")
-    print("first 8:", [round(v, 4) for v in vector[:8]])
+    print("text:", text)
+    print("length of the embedding:", len(vector))
+    print("first 8 numbers:", vector[:8])
     return
 
 
@@ -87,7 +87,7 @@ def _(embedder):
     ]
     vectors = embedder.embed_documents(sentences)
     for _i, _s in enumerate(sentences):
-        print(f"  [{_i}] {len(vectors[_i])} numbers  <- {_s}")
+        print(f"[{_i}] {_s} -> {len(vectors[_i])} numbers")
     return
 
 
