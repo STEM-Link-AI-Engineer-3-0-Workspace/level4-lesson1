@@ -46,6 +46,7 @@ Sri Lanka Department of Agriculture passages it retrieved itself.
 ├── scripts/            # shared setup every notebook imports
 │   ├── config.py
 │   ├── corpus.py
+│   ├── helpers.py
 │   └── weather.py
 ├── .env.example        # the keys you need, copy to .env
 ├── .python-version     # 3.12, uv fetches it for you
@@ -137,7 +138,7 @@ notebook as a plain script with `python notebooks/<notebook>.py` (or
 
 ## Core components
 
-The three files in `scripts/` are shared setup, not lesson concepts. The first
+The files in `scripts/` are shared setup, not lesson concepts. The first
 code cell in every notebook adds `scripts/` to the import path, so
 `from config import chat_model` works wherever marimo was launched from.
 
@@ -169,6 +170,16 @@ that needs no account or key. `geocode(place)` turns a place name into
 `(latitude, longitude, matched_name)`. `FORECAST_URL` and `TIMEZONE` are
 exported for the weather tools, which live inside the notebooks so you can see
 what a tool actually does.
+
+### `scripts/helpers.py`: small shared helpers
+
+Things you see written out in full once, then reuse so later notebooks stay short.
+
+| name | what it is |
+|---|---|
+| `vector_store()` | the Pinecone index `10` creates, as a LangChain `PineconeVectorStore` |
+| `format_docs(docs)` | joins retrieved `Document`s into one block of text, each tagged with its source |
+| `print_trace(messages)` | prints an agent's messages one line each, like the trace in `05` |
 
 ---
 
@@ -225,7 +236,7 @@ is an architecture decision. Neither fixes the other.
 
 **Try this:** note your search count and the Bg 352 answer.
 
-**Needs:** `OPENAI_API_KEY`, `PINECONE_API_KEY`, and `10` run first · **Uses:** `config.chat_model`, `config.embeddings`, `config.INDEX_NAME`
+**Needs:** `OPENAI_API_KEY`, `PINECONE_API_KEY`, and `10` run first · **Uses:** `config.chat_model`, `helpers.vector_store`, `helpers.format_docs`, `helpers.print_trace`
 
 ---
 

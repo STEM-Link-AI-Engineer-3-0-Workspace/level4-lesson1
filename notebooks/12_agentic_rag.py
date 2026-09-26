@@ -45,11 +45,11 @@ def _(mo):
 def _():
     from langchain.agents import create_agent
     from langchain.tools import tool
-    from langchain_pinecone import PineconeVectorStore
 
-    from config import INDEX_NAME, chat_model, embeddings
+    from config import chat_model
+    from helpers import format_docs, print_trace, vector_store
 
-    store = PineconeVectorStore(index_name=INDEX_NAME, embedding=embeddings())
+    store = vector_store()
     SEARCHES = []
 
     @tool
@@ -66,7 +66,7 @@ def _():
         docs = store.similarity_search(
             query, k=3, filter={"category": category} if category else None
         )
-        return "\n\n".join(f"[{d.metadata['source']}]\n{d.page_content}" for d in docs)
+        return format_docs(docs)
 
     agent = create_agent(
         chat_model(),
@@ -78,7 +78,7 @@ def _():
             "brackets. If the guide does not cover something, say so plainly."
         ),
     )
-    return SEARCHES, agent
+    return SEARCHES, agent, print_trace
 
 
 @app.cell
@@ -167,14 +167,8 @@ def _(mo):
 
 
 @app.cell
-def _(offtopic_result):
-    for _m in offtopic_result["messages"]:
-        _kind = type(_m).__name__
-        if getattr(_m, "tool_calls", None):
-            for _tc in _m.tool_calls:
-                print(f"   {_kind:14s} asks {_tc['name']}({_tc['args']})")
-        else:
-            print(f"   {_kind:14s} {_m.text[:60]!r}")
+def _(offtopic_result, print_trace):
+    print_trace(offtopic_result["messages"])
     return
 
 
