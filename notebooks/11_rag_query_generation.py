@@ -44,12 +44,12 @@ def _(mo):
 @app.cell
 def _():
     from langchain.messages import HumanMessage, SystemMessage
-    from langchain_pinecone import PineconeVectorStore
 
-    from config import INDEX_NAME, chat_model, embeddings
+    from config import chat_model
+    from helpers import format_docs, vector_store
 
     model = chat_model()
-    store = PineconeVectorStore(index_name=INDEX_NAME, embedding=embeddings())
+    store = vector_store()
 
     ANSWER_SYSTEM = SystemMessage(
         "You are an advisor for Sri Lankan paddy farmers. Answer ONLY from the "
@@ -63,9 +63,6 @@ def _():
             ANSWER_SYSTEM,
             HumanMessage(f"Passages:\n{passages}\n\nQuestion: {question}"),
         ]).text
-
-    def format_docs(docs) -> str:
-        return "\n\n".join(f"[{d.metadata['source']}]\n{d.page_content}" for d in docs)
 
     return HumanMessage, SystemMessage, answer_from, format_docs, model, store
 
