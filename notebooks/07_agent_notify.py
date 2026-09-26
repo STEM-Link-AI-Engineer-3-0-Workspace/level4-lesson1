@@ -61,7 +61,7 @@ def _():
         farmer needs to act on something time-sensitive, such as applying fertilizer
         before forecast rain. Keep the message under twenty words."""
         SENT.append(message)
-        print(f"   >>> send_alert -> {title}: {message} to {NTFY_TOPIC}")
+        print(f">>> send_alert: {message}")
 
         response = requests.post(
             f"https://ntfy.sh/{NTFY_TOPIC}",
@@ -75,7 +75,7 @@ def _():
     @tool
     def get_forecast(district: str) -> str:
         """Get the 48-hour rainfall forecast for a Sri Lankan district, in mm."""
-        print(f"   >>> get_forecast({district!r})")
+        print(f">>> get_forecast: {district}")
 
         lat, lon, name = geocode(district)
         hourly = requests.get(
@@ -118,12 +118,9 @@ def _(SENT, agent):
         "I was going to apply urea to my field in Polonnaruwa tomorrow morning. "
         "Should I still do it? Let me know on my phone as well."
     )
-    print("Q:", notify_question)
-    print()
     main_result = agent.invoke({"messages": [{"role": "user", "content": notify_question}]})
-    print()
     print(main_result["messages"][-1].text)
-    print("\nalerts sent:", len(SENT))
+    print("alerts sent:", len(SENT))
     if SENT:
         print("CHECK YOUR PHONE.")
     return
@@ -172,7 +169,7 @@ def _(SENT, agent):
         {"role": "user", "content": "What is the difference between Maha and Yala?"}
     ]})
     print(test_result["messages"][-1].text)
-    print("\nalerts sent:", len(SENT))
+    print("alerts sent:", len(SENT))
     return
 
 
