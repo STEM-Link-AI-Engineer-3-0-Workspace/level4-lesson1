@@ -54,8 +54,9 @@ def _(np):
     b = np.array([6.0, 6.0])     # same direction as a, longer
     c = np.array([2.0, -2.0])    # same length as a, opposite direction
 
-    print("a =", a, "  b =", b, "  (same direction as a, longer)")
-    print("c =", c, "  (same length as a, different direction)")
+    print("a =", a)
+    print("b =", b, " same direction as a, three times longer")
+    print("c =", c, " same length as a, different direction")
     return a, b, c
 
 
@@ -69,9 +70,8 @@ def _(a, b, c, np):
         """Angle between them: 1 = same direction, 0 = perpendicular, -1 = opposite."""
         return float(np.dot(p, q) / (np.linalg.norm(p) * np.linalg.norm(q)))
 
-    print(f"{'pair':8s} {'euclidean':>12s} {'cosine':>10s}")
-    print(f"{'a vs b':8s} {euclidean(a, b):>12.3f} {cosine_similarity(a, b):>10.3f}")
-    print(f"{'a vs c':8s} {euclidean(a, c):>12.3f} {cosine_similarity(a, c):>10.3f}")
+    print("a vs b:  euclidean", round(euclidean(a, b), 3), "  cosine", round(cosine_similarity(a, b), 3))
+    print("a vs c:  euclidean", round(euclidean(a, c), 3), "  cosine", round(cosine_similarity(a, c), 3))
     return cosine_similarity, euclidean
 
 
@@ -95,9 +95,9 @@ def _(mo):
 @app.cell
 def _(a, b, c, cosine_similarity, euclidean, np):
     au, bu, cu = (v / np.linalg.norm(v) for v in (a, b, c))
-    print("divide each vector by its own length, and:")
-    print(f"  euclidean(a,b) = {euclidean(au, bu):.3f}   cosine(a,b) = {cosine_similarity(au, bu):.3f}")
-    print(f"  euclidean(a,c) = {euclidean(au, cu):.3f}   cosine(a,c) = {cosine_similarity(au, cu):.3f}")
+    print("after dividing each vector by its own length:")
+    print("a vs b:  euclidean", round(euclidean(au, bu), 3), "  cosine", round(cosine_similarity(au, bu), 3))
+    print("a vs c:  euclidean", round(euclidean(au, cu), 3), "  cosine", round(cosine_similarity(au, cu), 3))
     return
 
 
@@ -141,9 +141,8 @@ def _(np, time):
 
 @app.cell
 def _(ms_per_query):
-    print(f"{'vectors':>10}  {'ms per query':>13}")
     for _n in (1_000, 20_000, 100_000):
-        print(f"{_n:>10,}  {ms_per_query(_n):>13.2f}")
+        print(_n, "vectors:", round(ms_per_query(_n), 2), "ms per query")
     return
 
 
@@ -209,14 +208,13 @@ def _(cluster, np, path, points, q):
     scores = points @ q          # every vector's similarity to the query
     best = int(np.argmax(scores))
 
-    print(f"{len(points)} vectors, in three clusters. Each vector keeps links to its 3 best")
-    print("neighbours. The query sits inside cluster 2.\n")
-    print(f"{'vector':>8} {'cluster':>9}   similarity to query")
+    print("the search hopped through:")
     for _v in path:
-        print(f"{_v:>8} {cluster[_v]:>9}         {scores[_v]:.3f}")
-    print(f"-- stop: no link improves on {scores[path[-1]]:.3f}.\n")
-    print(f"vectors examined: {len(path)} of {len(points)}")
-    print(f"checking everyone instead: best is vector {best}, cluster {cluster[best]}, score {scores[best]:.3f}")
+        print("  vector", _v, " cluster", cluster[_v], " similarity", round(scores[_v], 3))
+    print("stopped: no link is closer to the query")
+    print()
+    print("vectors examined:", len(path), "of", len(points))
+    print("checking every vector instead: best is vector", best, " cluster", cluster[best], " similarity", round(scores[best], 3))
     return
 
 
