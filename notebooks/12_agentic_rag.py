@@ -206,6 +206,9 @@ def _(mo):
 
     A production system is often deliberately the RAG half. Get retrieval
     right before you let anything start making decisions.
+
+    ---
+    **Next: `13_structured_output.py`** — an answer your code can use.
     """)
     return
 
