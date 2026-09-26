@@ -1,4 +1,4 @@
-"""Shared weather helper. Not a lesson concept — just the bit 04 and 07 both need.
+"""Shared weather code. Not a lesson concept.
 
 Open-Meteo (https://open-meteo.com) is a free weather API. No account, no key,
 no card. That is why we can use it live in a classroom.
@@ -8,12 +8,13 @@ Two endpoints are involved:
     geocoding-api.open-meteo.com/v1/search   a place name  -> a latitude/longitude
     api.open-meteo.com/v1/forecast           a lat/lon     -> the weather
 
-The weather calls themselves live inside the tools in 04 and 07, so you can see
-what a tool actually does. Only the name-to-coordinates step is shared, because
-both of them need it and it is the boring half.
+04 writes its rainfall tool out in full, so you can see what a tool actually
+does. 07 is about a different tool (one that sends an alert), so its forecast
+tool, get_forecast, lives here instead.
 """
 
 import requests
+from langchain.tools import tool
 
 GEOCODE_URL = "https://geocoding-api.open-meteo.com/v1/search"
 FORECAST_URL = "https://api.open-meteo.com/v1/forecast"
@@ -38,3 +39,25 @@ def geocode(place: str) -> tuple[float, float, str]:
 
     hit = results[0]
     return hit["latitude"], hit["longitude"], hit["name"]
+
+
+@tool
+def get_forecast(district: str) -> str:
+    """Get the 48-hour rainfall forecast for a Sri Lankan district, in mm."""
+    print(f">>> get_forecast: {district}")
+
+    lat, lon, name = geocode(district)
+    hourly = requests.get(
+        FORECAST_URL,
+        params={
+            "latitude": lat,
+            "longitude": lon,
+            "hourly": "precipitation",
+            "timezone": TIMEZONE,
+            "forecast_hours": 48,     # the next 48 hours, starting now
+        },
+        timeout=20,
+    ).json()["hourly"]
+
+    rain = round(sum(hourly["precipitation"]), 1)
+    return f"{name}: {rain} mm expected in the next 48 hours."
