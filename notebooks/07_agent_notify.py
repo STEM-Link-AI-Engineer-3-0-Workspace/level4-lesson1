@@ -45,22 +45,14 @@ def _(mo):
 
 @app.cell
 def _():
-    from datetime import datetime
-
     import requests
     from langchain.agents import create_agent
     from langchain.tools import tool
 
-    from config import NTFY_TOPIC, chat_model
+    from config import chat_model, require
     from weather import FORECAST_URL, TIMEZONE, geocode
 
-    if not NTFY_TOPIC:
-        raise SystemExit(
-            "\nNTFY_TOPIC is not set.\n"
-            "Install the ntfy app, subscribe to a topic you invent, and put the same\n"
-            "name in .env as NTFY_TOPIC. Then run this again.\n"
-        )
-
+    NTFY_TOPIC = require("NTFY_TOPIC")
     SENT = []
 
     @tool
@@ -93,18 +85,12 @@ def _():
                 "longitude": lon,
                 "hourly": "precipitation",
                 "timezone": TIMEZONE,
-                "forecast_days": 3,
+                "forecast_hours": 48,     # the next 48 hours, starting now
             },
             timeout=20,
         ).json()["hourly"]
 
-        # The series starts at midnight today, so find the current hour and take
-        # the next 48 from there.
-        now = datetime.now().strftime("%Y-%m-%dT%H")
-        start = next((i for i, t in enumerate(hourly["time"]) if t[:13] >= now), 0)
-        next_48 = hourly["precipitation"][start:start + 48]
-
-        return f"{name}: {sum(next_48):.1f} mm expected in the next 48 hours."
+        return f"{name}: {sum(hourly['precipitation']):.1f} mm expected in the next 48 hours."
 
     agent = create_agent(
         chat_model(),

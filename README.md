@@ -207,7 +207,7 @@ unique and don't send anything private.
 **Try this:** find a question where the agent notifies you when it shouldn't,
 then fix it by editing only the docstring.
 
-**Needs:** `OPENAI_API_KEY`, `NTFY_TOPIC` · **Uses:** `config.chat_model`, `config.NTFY_TOPIC`, `weather.geocode`, `weather.FORECAST_URL`, `weather.TIMEZONE`
+**Needs:** `OPENAI_API_KEY`, `NTFY_TOPIC` · **Uses:** `config.chat_model`, `config.require`, `weather.geocode`, `weather.FORECAST_URL`, `weather.TIMEZONE`
 
 <!-- notebook-08 -->
 
