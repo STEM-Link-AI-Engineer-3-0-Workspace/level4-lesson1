@@ -22,9 +22,9 @@ def format_docs(docs) -> str:
 def print_trace(messages) -> None:
     """Print an agent's messages one line each: the trace you read by hand in 05."""
     for m in messages:
-        kind = type(m).__name__
+        name = type(m).__name__
         if getattr(m, "tool_calls", None):
             for call in m.tool_calls:
-                print(f"   {kind:14s} asks {call['name']}({call['args']})")
+                print(name, "asks for", call["name"], call["args"])
         else:
-            print(f"   {kind:14s} {m.text[:64]!r}")
+            print(name, "->", m.text[:80])

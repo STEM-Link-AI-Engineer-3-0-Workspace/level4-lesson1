@@ -83,17 +83,15 @@ def _():
         "something down again around now? What do you reckon"
     )
 
-    print("What the farmer actually typed:\n")
-    print(" ", USER_TEXT)
+    print("What the farmer actually typed:")
+    print(USER_TEXT)
     return (USER_TEXT,)
 
 
 @app.cell
 def _(USER_TEXT, store):
     naive = store.similarity_search(USER_TEXT, k=3)
-    print("retrieved with that as the query:")
-    for _d in naive:
-        print(f"   {_d.id:24s} [{_d.metadata['category']}]")
+    print("retrieved with that as the query:", [d.id for d in naive])
     return (naive,)
 
 
@@ -132,17 +130,14 @@ def _(HumanMessage, SystemMessage, USER_TEXT, model):
 
     search_query = model.invoke([QUERY_SYSTEM, HumanMessage(USER_TEXT)]).text.strip()
 
-    print("farmer  :", USER_TEXT[:70], "...")
-    print("query   :", repr(search_query))
+    print("query the model wrote:", search_query)
     return QUERY_SYSTEM, search_query
 
 
 @app.cell
 def _(search_query, store):
     better = store.similarity_search(search_query, k=3)
-    print("retrieved with the generated query:")
-    for _d in better:
-        print(f"   {_d.id:24s} [{_d.metadata['category']}]")
+    print("retrieved with the generated query:", [d.id for d in better])
     return (better,)
 
 
@@ -162,8 +157,8 @@ def _(mo):
 
 @app.cell
 def _(better, naive):
-    print("naive     :", [d.id for d in naive])
-    print("generated :", [d.id for d in better])
+    print("naive:", [d.id for d in naive])
+    print("generated:", [d.id for d in better])
     return
 
 
@@ -191,7 +186,7 @@ def _(HumanMessage, QUERY_SYSTEM, model, store):
     FOLLOW_UP = "And what changes if I switch to Bg 352 instead?"
     q2 = model.invoke([QUERY_SYSTEM, HumanMessage(FOLLOW_UP)]).text.strip()
     print("question:", FOLLOW_UP)
-    print("query   :", repr(q2))
+    print("query:", q2)
 
     docs2 = store.similarity_search(q2, k=3)
     print("retrieved:", [d.id for d in docs2])
