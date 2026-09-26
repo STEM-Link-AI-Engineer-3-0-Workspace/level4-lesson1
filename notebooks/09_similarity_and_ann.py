@@ -118,30 +118,32 @@ def _(mo):
 
 
 @app.cell
-def _(np):
+def _(np, time):
     DIM = 256
-    exact_rng = np.random.default_rng(0)
+    rng = np.random.default_rng(0)
 
     def exact_knn(data, query, k=10):
-        """Brute force: score every vector against the query, take the top k."""
+        """Brute force: score every vector against the query, keep the top k."""
         scores = data @ query
         return np.argsort(scores)[::-1][:k]
 
-    return DIM, exact_knn, exact_rng
+    def ms_per_query(n, repeats=20):
+        """Time exact_knn over n random unit vectors, in milliseconds per query."""
+        data = rng.random((n, DIM), dtype=np.float32)
+        data /= np.linalg.norm(data, axis=1, keepdims=True)
+        start = time.perf_counter()
+        for _ in range(repeats):
+            exact_knn(data, data[0])
+        return (time.perf_counter() - start) / repeats * 1000
+
+    return (ms_per_query,)
 
 
 @app.cell
-def _(DIM, exact_knn, exact_rng, np, time):
+def _(ms_per_query):
     print(f"{'vectors':>10}  {'ms per query':>13}")
     for _n in (1_000, 20_000, 100_000):
-        _data = exact_rng.random((_n, DIM), dtype=np.float32)
-        _data /= np.linalg.norm(_data, axis=1, keepdims=True)
-        _reps = max(3, 30_000 // _n)
-        _t0 = time.perf_counter()
-        for _ in range(_reps):
-            exact_knn(_data, _data[0])
-        print(f"{_n:>10,}  {(time.perf_counter() - _t0) / _reps * 1000:>13.2f}")
-        del _data
+        print(f"{_n:>10,}  {ms_per_query(_n):>13.2f}")
     return
 
 
@@ -168,42 +170,53 @@ def _(mo):
 
 @app.cell
 def _(np):
-    graph_rng = np.random.default_rng(7)
+    # 45 made-up vectors in three clusters of 15, scaled to length 1
+    demo_rng = np.random.default_rng(7)
     centres = np.array([[0.0, 0.0], [5.0, 0.0], [2.0, 5.0]])
-    points = np.vstack([c + graph_rng.normal(0, 0.4, (15, 2)) for c in centres])
-    cluster = np.repeat([0, 1, 2], 15)
+    points = np.vstack([c + demo_rng.normal(0, 0.4, (15, 2)) for c in centres])
     points = points / np.linalg.norm(points, axis=1, keepdims=True)
-    N = len(points)
+    cluster = np.repeat([0, 1, 2], 15)
 
-    # the "links" -- every vector remembers its 3 most similar vectors
+    # the links: every vector remembers its 3 most similar vectors
     similarity = points @ points.T
     np.fill_diagonal(similarity, -np.inf)
     neighbours = np.argsort(similarity, axis=1)[:, ::-1][:, :3]
 
-    # a query that lives inside cluster 2
+    # a query that sits inside cluster 2
     q = centres[2] + np.array([0.2, -0.3])
     q = q / np.linalg.norm(q)
+    return cluster, neighbours, points, q
 
-    truth = points @ q
-    best = int(np.argmax(truth))
 
-    # the search: hop to the neighbour most like q, stop when nothing improves
-    current, seen = 0, [0]
-    for _ in range(N):
-        hop = int(neighbours[current][np.argmax(points[neighbours[current]] @ q)])
-        if hop in seen or points[hop] @ q <= points[current] @ q:
-            break
-        seen.append(hop)
-        current = hop
+@app.cell
+def _(neighbours, points, q):
+    def hop_search(start):
+        """Hop to whichever linked vector is most like q. Stop when no link is closer."""
+        path = [start]
+        while True:
+            here = path[-1]
+            best_link = max(neighbours[here], key=lambda v: points[v] @ q)
+            if points[best_link] @ q <= points[here] @ q:
+                return path
+            path.append(best_link)
 
-    print(f"{N} vectors, in three clusters. Each vector keeps links to its 3 best")
+    path = hop_search(start=0)
+    return (path,)
+
+
+@app.cell
+def _(cluster, np, path, points, q):
+    scores = points @ q          # every vector's similarity to the query
+    best = int(np.argmax(scores))
+
+    print(f"{len(points)} vectors, in three clusters. Each vector keeps links to its 3 best")
     print("neighbours. The query sits inside cluster 2.\n")
     print(f"{'vector':>8} {'cluster':>9}   similarity to query")
-    for _v in seen:
-        print(f"{_v:>8,d} {cluster[_v]:>9,d}         {truth[_v]:.3f}")
-    print(f"-- stop: no link improves on {points[current] @ q:.3f}.\n")
-    print(f"vectors examined: {len(seen)} of {N:,}")
-    print(f"checking everyone instead: best is vector {best}, cluster {cluster[best]}, score {truth[best]:.3f}")
+    for _v in path:
+        print(f"{_v:>8} {cluster[_v]:>9}         {scores[_v]:.3f}")
+    print(f"-- stop: no link improves on {scores[path[-1]]:.3f}.\n")
+    print(f"vectors examined: {len(path)} of {len(points)}")
+    print(f"checking everyone instead: best is vector {best}, cluster {cluster[best]}, score {scores[best]:.3f}")
     return
 
 
