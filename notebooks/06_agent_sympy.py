@@ -81,7 +81,7 @@ def _():
         else:
             result = sympy.simplify(expr)
 
-        print(f"   >>> calculate({expression!r}, {operation!r}) -> {result}")
+        print(f">>> calculate {operation}: {expression} = {result}")
         return str(result)
 
     agent = create_agent(
@@ -148,7 +148,7 @@ def _(CALLS, agent):
         {"role": "user", "content": "Integrate x * exp(x) with respect to x, and show me how."}
     ]})
     print(integral_result["messages"][-1].text)
-    print("\ntool calls:", CALLS)
+    print("tool calls:", CALLS)
     return
 
 
