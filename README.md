@@ -267,7 +267,20 @@ re-run.
 
 <!-- notebook-05 -->
 
-<!-- notebook-06 -->
+### `06_agent_sympy.py`: one tool, any maths, and who to believe
+
+Replaces four toy tools with one SymPy tool that evaluates, differentiates,
+integrates, solves, and simplifies **exactly**.
+
+- Arithmetic, differentiation, and integration through one tool
+- The tool is ground truth and the model is the narrator: SymPy returns the
+  answer, the model explains the steps
+- Catching the model narrating steps that don't match the tool's answer
+
+**Try this:** find a question where the tool's answer and the model's narrated
+steps disagree.
+
+**Needs:** `OPENAI_API_KEY` · **Uses:** `config.chat_model`
 
 <!-- notebook-07 -->
 
