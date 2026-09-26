@@ -68,7 +68,6 @@ def _():
         Examples of expression: "x**3 * log(x)", "sin(x)/x", "2**10 + sqrt(144)"
         """
         CALLS.append((expression, operation))
-        print(f"   >>> calculate({expression!r}, {operation!r}) ", end="")
 
         x = sympy.Symbol(variable)
         expr = sympy.sympify(expression)
@@ -82,7 +81,7 @@ def _():
         else:
             result = sympy.simplify(expr)
 
-        print(f"-> {result}")
+        print(f"   >>> calculate({expression!r}, {operation!r}) -> {result}")
         return str(result)
 
     agent = create_agent(
