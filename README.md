@@ -411,6 +411,24 @@ is an architecture decision. Neither fixes the other.
 
 **Needs:** `OPENAI_API_KEY`, `PINECONE_API_KEY`, and `10` run first · **Uses:** `config.chat_model`, `helpers.vector_store`, `helpers.format_docs`, `helpers.print_trace`
 
+### `13_structured_output.py`: an answer your code can use
+
+Every answer so far has been a paragraph. Structured output asks the model to
+answer in a shape you define, and hands back a Python object instead of text.
+
+- Getting a number out of prose, and why that breaks
+- `model.with_structured_output(Schema)`: a Pydantic class in, an object out
+- Checking the model against itself once the answer is data
+- The JSON Schema the model is actually sent: field descriptions are prompts
+- Designing for the answer you might not have: a `found` field instead of an
+  invented schedule
+- `create_agent(..., response_format=Schema)`, with the answer in
+  `result["structured_response"]`
+
+**Needs:** `OPENAI_API_KEY` · **Uses:** `config.chat_model`, `corpus.DOCS`, `helpers.print_trace`
+
+<!-- notebook-14 -->
+
 ---
 
 ## Sources
