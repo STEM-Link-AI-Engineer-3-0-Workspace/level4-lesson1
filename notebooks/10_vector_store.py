@@ -173,13 +173,15 @@ def _(mo):
 
 @app.cell
 def _(store):
-    query = "How much urea for a three month variety, and when?"
-    results = store.similarity_search_with_score(query, k=5)
+    def show(results):
+        """Print (Document, score) pairs, one per line."""
+        for doc, score in results:
+            print(f"  {score:.4f}  {doc.id:24s} [{doc.metadata['category']}]")
 
+    query = "How much urea for a three month variety, and when?"
     print("query:", query, "\n")
-    for _doc, _score in results:
-        print(f"  {_score:.4f}  {_doc.id:24s} [{_doc.metadata['category']}]")
-    return (query,)
+    show(store.similarity_search_with_score(query, k=5))
+    return query, show
 
 
 @app.cell
@@ -194,16 +196,12 @@ def _(mo):
 
 
 @app.cell
-def _(query, store):
+def _(query, show, store):
     print("everything:")
-    for _doc, _score in store.similarity_search_with_score(query, k=3):
-        print(f"  {_score:.4f}  {_doc.id:24s} [{_doc.metadata['category']}]")
+    show(store.similarity_search_with_score(query, k=3))
 
     print("\nfertilizer only:")
-    for _doc, _score in store.similarity_search_with_score(
-        query, k=3, filter={"category": "fertilizer"}
-    ):
-        print(f"  {_score:.4f}  {_doc.id:24s} [{_doc.metadata['category']}]")
+    show(store.similarity_search_with_score(query, k=3, filter={"category": "fertilizer"}))
     return
 
 
