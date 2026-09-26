@@ -269,7 +269,24 @@ re-run.
 
 <!-- notebook-06 -->
 
-<!-- notebook-07 -->
+### `07_agent_notify.py`: an agent with a real-world effect
+
+Every tool so far returned information. This one makes your phone buzz, using
+two tools: `get_forecast` (Open-Meteo) and `send_alert`, which pushes a
+notification through [ntfy](https://ntfy.sh).
+
+**Setup:** install the ntfy app, subscribe to a topic name you invent, and put
+the same name in `.env` as `NTFY_TOPIC`. ntfy.sh is public, so keep the topic
+unique and don't send anything private.
+
+- A question that needs both tools (forecast, then notify)
+- What changes when a tool has side effects
+- Trying to break it
+
+**Try this:** find a question where the agent notifies you when it shouldn't,
+then fix it by editing only the docstring.
+
+**Needs:** `OPENAI_API_KEY`, `NTFY_TOPIC` · **Uses:** `config.chat_model`, `config.NTFY_TOPIC`, `weather.geocode`, `weather.FORECAST_URL`, `weather.TIMEZONE`
 
 <!-- notebook-08 -->
 
