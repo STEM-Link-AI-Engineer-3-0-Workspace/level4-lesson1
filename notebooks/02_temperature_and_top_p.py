@@ -81,8 +81,7 @@ def _(PROMPT, SAMPLES, re):
             text = model.invoke(PROMPT).text.strip()
             match = re.match(r"\d+", text)
             rolls.append(match.group(0) if match else text)
-        distinct = len(set(rolls))
-        print(f"   {label:12s}  " + "  ".join(rolls) + f"   ->  {distinct} distinct")
+        print(label, "->", rolls, "->", len(set(rolls)), "distinct")
         return rolls
 
     return (roll,)
@@ -208,8 +207,8 @@ def _(chat_model):
         chat_model(top_p=0.05).invoke("Say hi")
         print("Surprise: top_p worked. (A newer model? Rerun and see.)")
     except Exception as e:
-        print(f"Proof: top_p with reasoning on -> {type(e).__name__}:")
-        print(f"       {str(e)[:100]}...")
+        print("Proof: top_p with reasoning on raised", type(e).__name__)
+        print(str(e)[:100])
     return
 
 

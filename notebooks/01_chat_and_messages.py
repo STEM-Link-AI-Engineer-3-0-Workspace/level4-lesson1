@@ -62,9 +62,8 @@ def _(mo):
 def _(model):
     simple_response = model.invoke("Name the two paddy cultivation seasons in Sri Lanka.")
 
-    print("what you sent    : a plain string")
-    print("what came back    :", type(simple_response).__name__)
-    print()
+    print("what you sent: a plain string")
+    print("what came back:", type(simple_response).__name__)
     print(simple_response.text)
     return (simple_response,)
 
@@ -83,11 +82,8 @@ def _(mo):
 
 @app.cell
 def _(simple_response):
-    print("response.usage_metadata:", simple_response.usage_metadata)
-    print(
-        "response.response_metadata['model_name']:",
-        simple_response.response_metadata.get("model_name"),
-    )
+    print("usage_metadata:", simple_response.usage_metadata)
+    print("model name:", simple_response.response_metadata.get("model_name"))
     return
 
 
@@ -158,7 +154,7 @@ def _(HumanMessage, messages, roles_response):
     ]
 
     for _m in history_messages:
-        print(f"   {type(_m).__name__:14s} {_m.text[:52]!r}")
+        print(type(_m).__name__, "->", _m.text[:60])
     return (history_messages,)
 
 
