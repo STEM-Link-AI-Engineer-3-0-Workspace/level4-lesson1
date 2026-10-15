@@ -45,11 +45,11 @@ def _(mo):
 def _():
     from langchain.agents import create_agent
     from langchain.tools import tool
-    from langchain_pinecone import PineconeVectorStore
 
-    from config import INDEX_NAME, chat_model, embeddings
+    from config import chat_model
+    from helpers import format_docs, print_trace, vector_store
 
-    store = PineconeVectorStore(index_name=INDEX_NAME, embedding=embeddings())
+    store = vector_store()
     SEARCHES = []
 
     @tool
@@ -61,12 +61,12 @@ def _():
         establishment, water, season.
         """
         SEARCHES.append((query, category))
-        print(f"   >>> search #{len(SEARCHES)}  query={query!r} category={category!r}")
+        print(f">>> search {len(SEARCHES)}: {query} (category: {category})")
 
         docs = store.similarity_search(
             query, k=3, filter={"category": category} if category else None
         )
-        return "\n\n".join(f"[{d.metadata['source']}]\n{d.page_content}" for d in docs)
+        return format_docs(docs)
 
     agent = create_agent(
         chat_model(),
@@ -78,7 +78,7 @@ def _():
             "brackets. If the guide does not cover something, say so plainly."
         ),
     )
-    return SEARCHES, agent
+    return SEARCHES, agent, print_trace
 
 
 @app.cell
@@ -98,9 +98,8 @@ def _(SEARCHES, agent):
     )
     SEARCHES.clear()
     main_result = agent.invoke({"messages": [{"role": "user", "content": USER_TEXT}]})
-    print()
     print(main_result["messages"][-1].text)
-    print("\nsearches:", len(SEARCHES))
+    print("searches:", len(SEARCHES))
     return
 
 
@@ -122,11 +121,8 @@ def _(SEARCHES, agent):
     followup_result = agent.invoke({"messages": [{"role": "user", "content":
         "I am growing Bg 352 under irrigation in the Dry Zone. "
         "How much urea, and when is the last top dressing?"}]})
-    print()
     print(followup_result["messages"][-1].text)
-    print("\nsearches:", len(SEARCHES))
-    for _i, (_q, _c) in enumerate(SEARCHES, 1):
-        print(f"   {_i}. {_q!r}  category={_c!r}")
+    print("searches:", len(SEARCHES))
     return
 
 
@@ -149,9 +145,8 @@ def _(SEARCHES, agent):
     SEARCHES.clear()
     offtopic_result = agent.invoke({"messages": [{"role": "user", "content":
         "Hi! What sort of things can you help me with?"}]})
-    print()
-    print(offtopic_result["messages"][-1].text[:220])
-    print("\nsearches:", len(SEARCHES))
+    print(offtopic_result["messages"][-1].text)
+    print("searches:", len(SEARCHES))
     return (offtopic_result,)
 
 
@@ -167,14 +162,8 @@ def _(mo):
 
 
 @app.cell
-def _(offtopic_result):
-    for _m in offtopic_result["messages"]:
-        _kind = type(_m).__name__
-        if getattr(_m, "tool_calls", None):
-            for _tc in _m.tool_calls:
-                print(f"   {_kind:14s} asks {_tc['name']}({_tc['args']})")
-        else:
-            print(f"   {_kind:14s} {_m.text[:60]!r}")
+def _(offtopic_result, print_trace):
+    print_trace(offtopic_result["messages"])
     return
 
 
@@ -206,6 +195,9 @@ def _(mo):
 
     A production system is often deliberately the RAG half. Get retrieval
     right before you let anything start making decisions.
+
+    ---
+    **Next: `13_structured_output.py`** — an answer your code can use.
     """)
     return
 

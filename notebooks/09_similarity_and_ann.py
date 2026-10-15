@@ -54,8 +54,9 @@ def _(np):
     b = np.array([6.0, 6.0])     # same direction as a, longer
     c = np.array([2.0, -2.0])    # same length as a, opposite direction
 
-    print("a =", a, "  b =", b, "  (same direction as a, longer)")
-    print("c =", c, "  (same length as a, different direction)")
+    print("a =", a)
+    print("b =", b, " same direction as a, three times longer")
+    print("c =", c, " same length as a, different direction")
     return a, b, c
 
 
@@ -69,9 +70,8 @@ def _(a, b, c, np):
         """Angle between them: 1 = same direction, 0 = perpendicular, -1 = opposite."""
         return float(np.dot(p, q) / (np.linalg.norm(p) * np.linalg.norm(q)))
 
-    print(f"{'pair':8s} {'euclidean':>12s} {'cosine':>10s}")
-    print(f"{'a vs b':8s} {euclidean(a, b):>12.3f} {cosine_similarity(a, b):>10.3f}")
-    print(f"{'a vs c':8s} {euclidean(a, c):>12.3f} {cosine_similarity(a, c):>10.3f}")
+    print("a vs b:  euclidean", round(euclidean(a, b), 3), "  cosine", round(cosine_similarity(a, b), 3))
+    print("a vs c:  euclidean", round(euclidean(a, c), 3), "  cosine", round(cosine_similarity(a, c), 3))
     return cosine_similarity, euclidean
 
 
@@ -95,9 +95,9 @@ def _(mo):
 @app.cell
 def _(a, b, c, cosine_similarity, euclidean, np):
     au, bu, cu = (v / np.linalg.norm(v) for v in (a, b, c))
-    print("divide each vector by its own length, and:")
-    print(f"  euclidean(a,b) = {euclidean(au, bu):.3f}   cosine(a,b) = {cosine_similarity(au, bu):.3f}")
-    print(f"  euclidean(a,c) = {euclidean(au, cu):.3f}   cosine(a,c) = {cosine_similarity(au, cu):.3f}")
+    print("after dividing each vector by its own length:")
+    print("a vs b:  euclidean", round(euclidean(au, bu), 3), "  cosine", round(cosine_similarity(au, bu), 3))
+    print("a vs c:  euclidean", round(euclidean(au, cu), 3), "  cosine", round(cosine_similarity(au, cu), 3))
     return
 
 
@@ -118,30 +118,31 @@ def _(mo):
 
 
 @app.cell
-def _(np):
+def _(np, time):
     DIM = 256
-    exact_rng = np.random.default_rng(0)
+    rng = np.random.default_rng(0)
 
     def exact_knn(data, query, k=10):
-        """Brute force: score every vector against the query, take the top k."""
+        """Brute force: score every vector against the query, keep the top k."""
         scores = data @ query
         return np.argsort(scores)[::-1][:k]
 
-    return DIM, exact_knn, exact_rng
+    def ms_per_query(n, repeats=20):
+        """Time exact_knn over n random unit vectors, in milliseconds per query."""
+        data = rng.random((n, DIM), dtype=np.float32)
+        data /= np.linalg.norm(data, axis=1, keepdims=True)
+        start = time.perf_counter()
+        for _ in range(repeats):
+            exact_knn(data, data[0])
+        return (time.perf_counter() - start) / repeats * 1000
+
+    return (ms_per_query,)
 
 
 @app.cell
-def _(DIM, exact_knn, exact_rng, np, time):
-    print(f"{'vectors':>10}  {'ms per query':>13}")
+def _(ms_per_query):
     for _n in (1_000, 20_000, 100_000):
-        _data = exact_rng.random((_n, DIM), dtype=np.float32)
-        _data /= np.linalg.norm(_data, axis=1, keepdims=True)
-        _reps = max(3, 30_000 // _n)
-        _t0 = time.perf_counter()
-        for _ in range(_reps):
-            exact_knn(_data, _data[0])
-        print(f"{_n:>10,}  {(time.perf_counter() - _t0) / _reps * 1000:>13.2f}")
-        del _data
+        print(_n, "vectors:", round(ms_per_query(_n), 2), "ms per query")
     return
 
 
@@ -168,42 +169,52 @@ def _(mo):
 
 @app.cell
 def _(np):
-    graph_rng = np.random.default_rng(7)
+    # 45 made-up vectors in three clusters of 15, scaled to length 1
+    demo_rng = np.random.default_rng(7)
     centres = np.array([[0.0, 0.0], [5.0, 0.0], [2.0, 5.0]])
-    points = np.vstack([c + graph_rng.normal(0, 0.4, (15, 2)) for c in centres])
-    cluster = np.repeat([0, 1, 2], 15)
+    points = np.vstack([c + demo_rng.normal(0, 0.4, (15, 2)) for c in centres])
     points = points / np.linalg.norm(points, axis=1, keepdims=True)
-    N = len(points)
+    cluster = np.repeat([0, 1, 2], 15)
 
-    # the "links" -- every vector remembers its 3 most similar vectors
+    # the links: every vector remembers its 3 most similar vectors
     similarity = points @ points.T
     np.fill_diagonal(similarity, -np.inf)
     neighbours = np.argsort(similarity, axis=1)[:, ::-1][:, :3]
 
-    # a query that lives inside cluster 2
+    # a query that sits inside cluster 2
     q = centres[2] + np.array([0.2, -0.3])
     q = q / np.linalg.norm(q)
+    return cluster, neighbours, points, q
 
-    truth = points @ q
-    best = int(np.argmax(truth))
 
-    # the search: hop to the neighbour most like q, stop when nothing improves
-    current, seen = 0, [0]
-    for _ in range(N):
-        hop = int(neighbours[current][np.argmax(points[neighbours[current]] @ q)])
-        if hop in seen or points[hop] @ q <= points[current] @ q:
-            break
-        seen.append(hop)
-        current = hop
+@app.cell
+def _(neighbours, points, q):
+    def hop_search(start):
+        """Hop to whichever linked vector is most like q. Stop when no link is closer."""
+        path = [start]
+        while True:
+            here = path[-1]
+            best_link = max(neighbours[here], key=lambda v: points[v] @ q)
+            if points[best_link] @ q <= points[here] @ q:
+                return path
+            path.append(best_link)
 
-    print(f"{N} vectors, in three clusters. Each vector keeps links to its 3 best")
-    print("neighbours. The query sits inside cluster 2.\n")
-    print(f"{'vector':>8} {'cluster':>9}   similarity to query")
-    for _v in seen:
-        print(f"{_v:>8,d} {cluster[_v]:>9,d}         {truth[_v]:.3f}")
-    print(f"-- stop: no link improves on {points[current] @ q:.3f}.\n")
-    print(f"vectors examined: {len(seen)} of {N:,}")
-    print(f"checking everyone instead: best is vector {best}, cluster {cluster[best]}, score {truth[best]:.3f}")
+    path = hop_search(start=0)
+    return (path,)
+
+
+@app.cell
+def _(cluster, np, path, points, q):
+    scores = points @ q          # every vector's similarity to the query
+    best = int(np.argmax(scores))
+
+    print("the search hopped through:")
+    for _v in path:
+        print("  vector", _v, " cluster", cluster[_v], " similarity", round(scores[_v], 3))
+    print("stopped: no link is closer to the query")
+    print()
+    print("vectors examined:", len(path), "of", len(points))
+    print("checking every vector instead: best is vector", best, " cluster", cluster[best], " similarity", round(scores[best], 3))
     return
 
 
